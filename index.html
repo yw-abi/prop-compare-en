@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investment Map - Houston, Texas</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; direction: ltr; }
+#map { flex: 1; height: 100%; }
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.leaflet-popup-content {
+  margin: 0;
+  min-width: 280px;
+}
+.popup-header {
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  color: #fff;
+  padding: 14px 16px;
+  border-radius: 12px 12px 0 0;
+}
+.popup-header h3 { font-size: 16px; margin-bottom: 2px; }
+.popup-header .sub { font-size: 12px; color: #aaa; }
+.popup-body { padding: 12px 16px 14px; }
+.popup-body p { font-size: 13px; color: #555; line-height: 1.5; margin-bottom: 8px; direction: ltr; text-align: left; }
+.popup-body .info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.popup-body .info-row .label { color: #999; }
+.popup-body .info-row .value { color: #333; font-weight: 600; text-align: right; }
+.popup-body .popup-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+.popup-body .lennar-link {
+  display: inline-block;
+  font-size: 12px;
+  color: #0f3460;
+  text-decoration: none;
+  font-weight: 600;
+}
+.popup-body .lennar-link:hover { text-decoration: underline; }
+.popup-body .aerial-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 5px 12px;
+  background: linear-gradient(135deg, #16213e, #0f3460);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.popup-body .aerial-btn:hover { opacity: 0.85; transform: scale(1.02); }
+.aerial-modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+}
+.aerial-modal-overlay.active { display: flex; }
+.aerial-modal {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  width: 700px;
+  max-width: 90vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.aerial-modal-header {
+  background: linear-gradient(135deg, #16213e, #0f3460);
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.aerial-modal-header h3 { font-size: 16px; }
+.aerial-modal-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.7;
+}
+.aerial-modal-close:hover { opacity: 1; }
+#aerial-map { width: 100%; height: 420px; }
+.aerial-modal-footer {
+  padding: 10px 20px;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  background: #f8f8f8;
+}
+.drive-label {
+  background: rgba(26, 26, 46, 0.85);
+  color: #eee;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.community-label {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 16px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,0.5);
+  letter-spacing: 1px;
+}
+.employer-label {
+  background: rgba(230, 126, 34, 0.95);
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: normal;
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  line-height: 1.3;
+}
+.ring-label {
+  background: none;
+  border: none;
+  color: rgba(15, 52, 96, 0.45);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.map-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 999;
+  display: flex;
+  gap: 6px;
+}
+.map-btn {
+  padding: 8px 14px;
+  background: rgba(26, 26, 46, 0.85);
+  color: #ccc;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+.map-btn:hover { background: rgba(40, 40, 70, 0.9); color: #fff; }
+.map-btn.active { background: #e94560; color: #fff; border-color: #e94560; }
+#resources-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 1100;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e94560, #c0392b);
+  color: #fff;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(233,69,96,0.4);
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#resources-btn:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(233,69,96,0.5); }
+#resources-btn .badge-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #f39c12;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#resources-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1200;
+}
+#resources-overlay.active { display: block; }
+#resources-panel {
+  position: fixed;
+  top: 0;
+  left: -420px;
+  width: 400px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #1a1a2e;
+  z-index: 1300;
+  overflow-y: auto;
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+  direction: ltr;
+}
+#resources-panel.open { left: 0; }
+.res-header {
+  padding: 24px 20px 16px;
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  border-bottom: 2px solid #e94560;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.res-header h2 { font-size: 18px; color: #fff; }
+.res-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.res-close:hover { color: #fff; }
+.res-card {
+  margin: 12px 16px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.res-card:hover {
+  background: rgba(233,69,96,0.1);
+  border-color: rgba(233,69,96,0.3);
+  transform: translateY(-2px);
+}
+.res-card-body { padding: 16px; }
+.res-card-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #e94560;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.res-card-source .src-icon {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+.res-card-source .src-icon.facebook { background: #1877f2; color: #fff; }
+.res-card-source .src-icon.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff; }
+.res-card-source .src-icon.article { background: #2ecc71; color: #fff; }
+.res-card-source .src-icon.youtube { background: #ff0000; color: #fff; }
+.res-card h3 { font-size: 14px; color: #fff; margin-bottom: 6px; line-height: 1.5; }
+.res-card .res-desc { font-size: 12px; color: #aaa; line-height: 1.5; }
+.res-card .res-date { font-size: 10px; color: #666; margin-top: 8px; }
+.res-card .res-arrow { float: right; color: #e94560; font-size: 18px; margin-top: -20px; }
+.res-card video { width: 100%; border-radius: 8px; margin-bottom: 10px; max-height: 500px; background: #000; }
+.res-card .res-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: #1877f2; text-decoration: none; margin-top: 6px;
+}
+.res-card .res-link:hover { text-decoration: underline; }
+.res-empty-hint { padding: 40px 20px; text-align: center; color: #555; font-size: 13px; }
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  #map { height: 100vh; }
+  .community-label { font-size: 14px; }
+  .employer-label { font-size: 9px; padding: 2px 6px; }
+  .map-btn { padding: 5px 10px; font-size: 11px; }
+  .map-controls { top: 8px; right: 8px; gap: 4px; }
+  .aerial-modal { width: 95vw; }
+  .aerial-modal-header h3 { font-size: 13px; }
+  #aerial-map { height: 280px; }
+  .aerial-modal-footer { font-size: 11px; padding: 8px 12px; }
+  #resources-panel { width: 100vw; max-width: 100vw; left: -105vw; }
+  #resources-btn { bottom: 16px; left: 16px; width: 46px; height: 46px; font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div id="map" style="position: relative; width: 100%; height: 100vh;">
+  <div class="map-controls">
+    <button class="map-btn active" onclick="setLayer('street')">Map</button>
+    <button class="map-btn" onclick="setLayer('satellite')">Satellite</button>
+  </div>
+</div>
+
+<button id="resources-btn" onclick="toggleResources()" title="Investor Content & Resources">
+  📰
+  <span class="badge-count" id="res-count"></span>
+</button>
+
+<div id="resources-overlay" onclick="toggleResources()"></div>
+<div id="resources-panel">
+  <div class="res-header">
+    <h2>📰 Investor Content</h2>
+    <button class="res-close" onclick="toggleResources()">&times;</button>
+  </div>
+  <div id="resources-list"></div>
+</div>
+
+<div class="aerial-modal-overlay" id="aerialOverlay">
+  <div class="aerial-modal">
+    <div class="aerial-modal-header">
+      <h3 id="aerialTitle"></h3>
+      <button class="aerial-modal-close" onclick="closeAerial()">&times;</button>
+    </div>
+    <div id="aerial-map"></div>
+    <div class="aerial-modal-footer" id="aerialFooter"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const HOUSTON_CENTER = [29.7604, -95.3698];
+
+const communities = [
+  {
+    id: 'crosby', name: 'Crosby', area: 'East Houston',
+    lat: 29.9119, lng: -95.0624, color: '#e94560', builder: 'Lennar',
+    communities: 'Indian Springs, Sweetgrass Village, Newport Preserve, Crosby Farms',
+    priceRange: '$237K - $320K', schoolDistrict: 'Crosby ISD',
+    description: 'East Houston. Close to the Port of Houston and Lake Houston. Easy access to I-90 and the Grand Parkway expansion. Attractive prices with high growth potential.',
+    highlights: ['Near Lake Houston', 'Grand Parkway expansion', 'Port of Houston access'],
+    url: 'https://www.lennar.com/new-homes/texas/houston/crosby',
+    driveTime: '~30 min', driveMinutes: 30,
+    aerialLat: 29.9456, aerialLng: -95.1066, aerialZoom: 17,
+    aerialNote: 'Synova neighborhood in Crosby – new homes under construction (Autumn Hts Ln)'
+  },
+  {
+    id: 'anniston', name: 'Anniston', area: 'Katy, West Houston',
+    lat: 29.8485, lng: -95.8180, color: '#f39c12', builder: 'Lennar',
+    communities: 'Anniston (5 collections, 16 floor plans)',
+    priceRange: '$268K - $510K', schoolDistrict: 'Katy ISD',
+    description: 'West Houston, in the Katy area. New master-planned community with a lake, recreation center, and pool. Close to SH-99 and I-10. Excellent schools in Katy ISD.',
+    highlights: ['Katy ISD schools', 'Lake + recreation center', 'Near I-10 & SH-99'],
+    url: 'https://www.lennar.com/new-homes/texas/houston/katy/anniston',
+    driveTime: '~35 min', driveMinutes: 35,
+    aerialLat: 29.8693, aerialLng: -95.8357, aerialZoom: 17,
+    aerialNote: 'Anniston neighborhood in Katy – new construction near Harvest Wheat Ln'
+  },
+  {
+    id: 'sila', name: 'Sila', area: 'Huffman, NE Houston',
+    lat: 30.0455, lng: -95.1080, color: '#2ecc71', builder: 'Lennar',
+    communities: 'Sila (Cottage, Wellton, Avante Collections)',
+    priceRange: '$250K - $380K', schoolDistrict: 'Huffman ISD',
+    description: 'Northeast Houston, in the Huffman area. A forested community with walking trails, a pool, and a pickleball court. Easy access to I-69.',
+    highlights: ['Forest views', 'Pool + pickleball', 'Near I-69'],
+    url: 'https://www.lennar.com/new-homes/texas/houston/huffman/sila',
+    driveTime: '~35 min', driveMinutes: 35,
+    aerialLat: 30.1269, aerialLng: -95.1176, aerialZoom: 17,
+    aerialNote: 'Sila neighborhood in Huffman – new construction amid forest land (Prunella Ln)'
+  },
+  {
+    id: 'new-caney', name: 'New Caney', area: 'North Houston',
+    lat: 30.1528, lng: -95.1942, color: '#9b59b6', builder: 'Lennar',
+    communities: 'The Trails, Tavola, Tavola West, Pinewood at Grand Texas',
+    priceRange: '$230K - $350K', schoolDistrict: 'New Caney ISD',
+    description: 'North Houston. Several large communities including Tavola (1,560 acres). Close to Valley Ranch Town Center, Big Rivers Water Park, and US-59.',
+    highlights: ['Tavola – 1,560 acres', 'Valley Ranch Town Center', 'Grand Parkway access'],
+    url: 'https://www.lennar.com/new-homes/texas/houston/new-caney',
+    driveTime: '~40 min', driveMinutes: 40,
+    aerialLat: 30.1713, aerialLng: -95.2178, aerialZoom: 17,
+    aerialNote: 'Tavola West in New Caney – new homes under construction (Via Aurelia Dr)'
+  },
+  {
+    id: 'hockley', name: 'Hockley', area: 'NW Houston',
+    lat: 30.07, lng: -95.87, color: '#1abc9c', builder: 'Lennar',
+    communities: 'The Grand Prairie (The Highlands), Cypress Green, Dellrose',
+    priceRange: '$246K - $427K', schoolDistrict: 'Waller ISD',
+    description: 'Northwest Houston. The Grand Prairie – a master-planned community on 1,730 acres with a 70-acre lake, pools, and recreation amenities. Close to US-290 and the Grand Parkway.',
+    highlights: ['70-acre lake', 'Starlight recreation complex', 'Near US-290'],
+    url: 'https://www.lennar.com/new-homes/texas/houston/hockley',
+    driveTime: '~40 min', driveMinutes: 40,
+    aerialLat: 30.07, aerialLng: -95.87, aerialZoom: 16,
+    aerialNote: 'The Grand Prairie in Hockley – new community with a central lake'
+  },
+  {
+    id: 'lago-mar', name: 'Lago Mar', area: 'Texas City, South Houston',
+    lat: 29.375, lng: -94.985, color: '#3498db', builder: 'Lennar + 13 builders',
+    communities: 'Lago Mar (multiple neighborhoods & builders)',
+    priceRange: '$260K - $510K', schoolDistrict: 'Dickinson ISD',
+    description: 'South Houston, near Texas City. A 2,033-acre community with a 12-acre crystal lagoon, white sand beach, restaurant, and club. 4,500 homes planned.',
+    highlights: ['12-acre crystal lagoon', 'Club + infinity pool', 'Near Galveston'],
+    url: 'https://lagomarintexascity.com/',
+    driveTime: '~45 min', driveMinutes: 45,
+    aerialLat: 29.375, aerialLng: -94.985, aerialZoom: 15,
+    aerialNote: 'Lago Mar in Texas City – community with a massive crystal lagoon'
+  }
+];
+
+const employers = [
+  { name: 'Apple AI Manufacturing', icon: '🍎', lat: 29.870, lng: -95.545, employees: '~5,000', desc: "Apple AI server and Mac Mini manufacturing plant. 500,000 sq ft, thousands of employees. Part of Apple's $600B U.S. investment commitment.", type: 'Technology' },
+  { name: 'HPE Global HQ', icon: '💻', lat: 30.017, lng: -95.461, employees: '~4,000', desc: 'Global headquarters of Hewlett Packard Enterprise. Relocated from Silicon Valley in 2022. 440,000 sq ft campus at Springwoods Village.', type: 'Technology' },
+  { name: 'ExxonMobil Campus', icon: '🛢️', lat: 30.0667, lng: -95.3981, employees: '10,000+', desc: "ExxonMobil headquarters in Spring. One of the world's largest energy companies. 10,000+ employees on site.", type: 'Energy' },
+  { name: 'Energy Corridor', icon: '⚡', lat: 29.7724, lng: -95.5609, employees: '90,000+', desc: 'Concentration of HQs including BP, Shell, ConocoPhillips, Phillips 66 and more. Over 90,000 employees in the area.', type: 'Energy' },
+  { name: 'Houston Ship Channel', icon: '🏭', lat: 29.737, lng: -95.013, employees: '100,000+', desc: '44% of total U.S. petrochemical production. Hundreds of plants across a vast industrial zone.', type: 'Industry' },
+  { name: 'Texas Medical Center', icon: '🏥', lat: 29.7066, lng: -95.3975, employees: '106,000+', desc: "The world's largest medical center. 106,000+ employees across 60 medical institutions.", type: 'Healthcare' },
+  { name: 'NASA JSC', icon: '🚀', lat: 29.5519, lng: -95.0930, employees: '10,000+', desc: "NASA's Johnson Space Center. Mission control for human spaceflight. 10,000+ employees including engineers and scientists.", type: 'Space & Research' },
+  { name: 'IAH Airport', icon: '✈️', lat: 29.9902, lng: -95.3368, employees: '40,000+', desc: "George Bush Intercontinental Airport (IAH). Houston's main international gateway with 40M+ passengers/year. 40,000+ workers.", type: 'Transportation' },
+  { name: 'Univ. of Houston', icon: '🎓', lat: 29.7199, lng: -95.3422, employees: '46,000+', desc: 'University of Houston – one of the largest universities in Texas. 46,000+ students, 6,000+ employees, advanced research centers.', type: 'Higher Education' }
+];
+
+const futureDevelopments = [
+  {
+    name: 'Toro District', icon: '🏈', lat: 29.9295, lng: -95.6920,
+    status: 'Planned · Opening 2029', cost: '$34B economic impact',
+    desc: 'New global HQ for the Houston Texans on 83 acres in Bridgeland. 16,000-seat covered stadium, 3 NFL practice fields, retail, hotels, and entertainment. 17,000 new jobs.',
+    highlights: ['150,000 sqft covered stadium', '175,000 sqft office space', '61 commercial acres', '6 parks + 5,000 parking spaces']
+  },
+  {
+    name: 'Convention District', icon: '🏗️', lat: 29.7520, lng: -95.3555,
+    status: 'Under Construction · Phase 1 opens 2028', cost: '$2B · $20B impact over 30 years',
+    desc: 'Expansion of the George R. Brown Convention Center by 700,000 sqft. Largest event hall in Texas. 60 blocks of mixed-use development with residential, hotels, and entertainment.',
+    highlights: ['700,000 sqft expansion', 'Largest hall in Texas', 'FIFA 2026 + RNC 2028', 'New east-west metro line']
+  }
+];
+
+const landmarks = [
+  { name: 'Downtown Houston', icon: '🏙️', lat: 29.7604, lng: -95.3698 }
+];
+
+// MAP SETUP
+const map = L.map('map', { center: [29.95, -95.35], zoom: 10, zoomControl: false });
+const communityBounds = L.latLngBounds(communities.map(c => [c.lat, c.lng]));
+communityBounds.extend(HOUSTON_CENTER);
+map.fitBounds(communityBounds, { padding: [30, 30] });
+L.control.zoom({ position: 'topleft' }).addTo(map);
+
+const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19 });
+const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 });
+const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+streetLayer.addTo(map);
+
+function setLayer(type) {
+  document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
+  if (type === 'satellite') {
+    map.removeLayer(streetLayer); map.removeLayer(labelsLayer);
+    satelliteLayer.addTo(map); labelsLayer.addTo(map);
+    document.querySelectorAll('.map-btn')[1].classList.add('active');
+  } else {
+    map.removeLayer(satelliteLayer); map.removeLayer(labelsLayer);
+    streetLayer.addTo(map);
+    document.querySelectorAll('.map-btn')[0].classList.add('active');
+  }
+}
+
+// DISTANCE RINGS
+const ringDistances = [
+  { radius: 16000, label: '~15 min' },
+  { radius: 32000, label: '~30 min' },
+  { radius: 48000, label: '~45 min' }
+];
+L.circle(HOUSTON_CENTER, { radius: 5000, color: '#e94560', fillColor: '#e94560', fillOpacity: 0.08, weight: 2, opacity: 0.5 }).addTo(map);
+ringDistances.forEach(ring => {
+  L.circle(HOUSTON_CENTER, { radius: ring.radius, color: 'rgba(15,52,96,0.25)', fillColor: 'transparent', fillOpacity: 0, weight: 1.5, dashArray: '8,8' }).addTo(map);
+  const labelLat = HOUSTON_CENTER[0] + (ring.radius / 111320);
+  L.marker([labelLat, HOUSTON_CENTER[1]], { icon: L.divIcon({ className: 'ring-label', html: ring.label, iconSize: [60,16], iconAnchor: [30,8] }), interactive: false }).addTo(map);
+});
+
+// DRIVE LINES
+communities.forEach(c => {
+  L.polyline([HOUSTON_CENTER, [c.lat, c.lng]], { color: c.color, weight: 2.5, opacity: 0.6, dashArray: '8,6' }).addTo(map);
+  const midLat = (HOUSTON_CENTER[0] + c.lat) / 2;
+  const midLng = (HOUSTON_CENTER[1] + c.lng) / 2;
+  L.marker([midLat, midLng], { icon: L.divIcon({ className: 'drive-label', html: `🚗 ${c.driveTime}`, iconSize: [90,22], iconAnchor: [45,11] }), interactive: false }).addTo(map);
+});
+
+// COMMUNITY MARKERS
+function createCommunityIcon(color) {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<div style="width:28px;height:28px;background:${color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;background:#fff;border-radius:50%;"></div></div>`,
+    iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-16]
+  });
+}
+
+const communityMarkers = {};
+communities.forEach(c => {
+  const marker = L.marker([c.lat, c.lng], { icon: createCommunityIcon(c.color) })
+    .addTo(map)
+    .bindPopup(`
+      <div class="popup-header">
+        <h3>${c.name}</h3>
+        <div class="sub">${c.area} · ${c.builder} · 🚗 ${c.driveTime} to downtown</div>
+      </div>
+      <div class="popup-body">
+        <p>${c.description}</p>
+        <div class="info-row"><span class="label">Communities</span><span class="value">${c.communities}</span></div>
+        <div class="info-row"><span class="label">Price Range</span><span class="value">${c.priceRange}</span></div>
+        <div class="info-row"><span class="label">School District</span><span class="value">${c.schoolDistrict}</span></div>
+        <div class="info-row"><span class="label">Highlights</span><span class="value">${c.highlights.join(', ')}</span></div>
+        <div class="popup-links">
+          <a class="lennar-link" href="${c.url}" target="_blank">View on Lennar.com →</a>
+          <button class="aerial-btn" onclick="openAerial('${c.id}')">📸 Aerial View</button>
+        </div>
+      </div>
+    `, { maxWidth: 340 });
+  communityMarkers[c.id] = marker;
+  L.marker([c.lat + 0.018, c.lng], { icon: L.divIcon({ className: 'community-label', html: c.name, iconSize: [200,30], iconAnchor: [100,15] }), interactive: false }).addTo(map);
+  L.circle([c.lat, c.lng], { radius: 3000, color: c.color, fillColor: c.color, fillOpacity: 0.08, weight: 1.5, opacity: 0.4 }).addTo(map);
+});
+
+// AERIAL MODAL
+let aerialMap = null;
+function openAerial(communityId) {
+  const c = communities.find(x => x.id === communityId);
+  if (!c) return;
+  document.getElementById('aerialTitle').textContent = `📸 ${c.name} – Satellite View`;
+  document.getElementById('aerialFooter').textContent = c.aerialNote;
+  document.getElementById('aerialOverlay').classList.add('active');
+  if (aerialMap) { aerialMap.remove(); aerialMap = null; }
+  const aLat = c.aerialLat || c.lat;
+  const aLng = c.aerialLng || c.lng;
+  setTimeout(() => {
+    aerialMap = L.map('aerial-map', { center: [aLat, aLng], zoom: c.aerialZoom, zoomControl: true });
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 }).addTo(aerialMap);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(aerialMap);
+    L.marker([aLat, aLng], { icon: createCommunityIcon(c.color) }).addTo(aerialMap);
+    L.circle([aLat, aLng], { radius: 500, color: c.color, fillColor: c.color, fillOpacity: 0.1, weight: 2, dashArray: '6,4' }).addTo(aerialMap);
+  }, 100);
+}
+function closeAerial() {
+  document.getElementById('aerialOverlay').classList.remove('active');
+  if (aerialMap) { aerialMap.remove(); aerialMap = null; }
+}
+document.getElementById('aerialOverlay').addEventListener('click', function(e) { if (e.target === this) closeAerial(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeAerial(); });
+
+// EMPLOYER MARKERS
+function createEmployerIcon(icon) {
+  return L.divIcon({
+    className: 'employer-marker',
+    html: `<div style="width:42px;height:42px;background:#e67e22;border:3px solid #fff;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;font-size:22px;">${icon}</div>`,
+    iconSize: [42,42], iconAnchor: [21,21], popupAnchor: [0,-24]
+  });
+}
+employers.forEach(emp => {
+  L.marker([emp.lat, emp.lng], { icon: createEmployerIcon(emp.icon) })
+    .addTo(map)
+    .bindPopup(`<div class="popup-header" style="background:linear-gradient(135deg,#e67e22,#d35400);"><h3>${emp.icon} ${emp.name}</h3><div class="sub">${emp.type}</div></div><div class="popup-body"><p>${emp.desc}</p></div>`, { maxWidth: 300 });
+  const labelHtml = emp.employees ? `${emp.name}<br><span style="font-size:10px;font-weight:400;opacity:0.85">(${emp.employees} employees)</span>` : emp.name;
+  L.marker([emp.lat + 0.02, emp.lng], { icon: L.divIcon({ className: 'employer-label', html: labelHtml, iconSize: [160,44], iconAnchor: [80,22] }), interactive: false }).addTo(map);
+});
+
+// LANDMARK MARKERS
+function createLandmarkIcon() {
+  return L.divIcon({
+    className: 'landmark-marker',
+    html: `<div style="width:18px;height:18px;background:#3498db;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3);opacity:0.8;"></div>`,
+    iconSize: [18,18], iconAnchor: [9,9], popupAnchor: [0,-12]
+  });
+}
+landmarks.forEach(lm => {
+  L.marker([lm.lat, lm.lng], { icon: createLandmarkIcon() })
+    .addTo(map)
+    .bindPopup(`<div class="popup-header"><h3>${lm.icon} ${lm.name}</h3></div>`, { maxWidth: 220 });
+});
+
+// FUTURE DEVELOPMENT MARKERS
+function createFutureIcon(icon) {
+  return L.divIcon({
+    className: 'future-marker',
+    html: `<div style="width:44px;height:44px;background:linear-gradient(135deg,#8e44ad,#6c3483);border:3px solid #fff;border-radius:10px;box-shadow:0 3px 12px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;font-size:22px;">${icon}</div>`,
+    iconSize: [44,44], iconAnchor: [22,22], popupAnchor: [0,-26]
+  });
+}
+futureDevelopments.forEach(dev => {
+  L.marker([dev.lat, dev.lng], { icon: createFutureIcon(dev.icon) })
+    .addTo(map)
+    .bindPopup(`<div class="popup-header" style="background:linear-gradient(135deg,#8e44ad,#6c3483);"><h3>${dev.icon} ${dev.name}</h3><div class="sub">${dev.status} · ${dev.cost}</div></div><div class="popup-body"><p>${dev.desc}</p><div class="info-row"><span class="label">Highlights</span><span class="value">${dev.highlights.join(' · ')}</span></div></div>`, { maxWidth: 340 });
+  L.marker([dev.lat + 0.02, dev.lng], { icon: L.divIcon({ className: 'employer-label', html: dev.name, iconSize: [160,30], iconAnchor: [80,15] }), interactive: false }).addTo(map);
+});
+
+// RESOURCES PANEL
+const resources = [];
+function renderResources() {
+  const list = document.getElementById('resources-list');
+  const count = document.getElementById('res-count');
+  if (resources.length === 0) {
+    list.innerHTML = `<div class="res-empty-hint">No resources available yet.</div>`;
+    count.style.display = 'none';
+    return;
+  }
+  count.textContent = resources.length;
+  count.style.display = 'flex';
+  list.innerHTML = resources.map(r => `
+    <div class="res-card" onclick="${r.url ? `window.open('${r.url}','_blank')` : ''}">
+      <div class="res-card-body">
+        <div class="res-card-source"><span class="src-icon ${r.source || 'article'}">${r.sourceIcon || '📄'}</span>${r.sourceName || 'Resource'}</div>
+        ${r.video ? `<video controls src="${r.video}"></video>` : ''}
+        <h3>${r.title}</h3>
+        <div class="res-desc">${r.desc || ''}</div>
+        ${r.date ? `<div class="res-date">${r.date}</div>` : ''}
+        ${r.url ? `<a class="res-link" href="${r.url}" target="_blank">Read more →</a>` : ''}
+        <span class="res-arrow">›</span>
+      </div>
+    </div>
+  `).join('');
+}
+function toggleResources() {
+  const panel = document.getElementById('resources-panel');
+  const overlay = document.getElementById('resources-overlay');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) { panel.classList.remove('open'); overlay.classList.remove('active'); }
+  else { renderResources(); panel.classList.add('open'); overlay.classList.add('active'); }
+}
+renderResources();
+</script>
+</body>
+</html>
