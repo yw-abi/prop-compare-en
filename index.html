@@ -3,642 +3,1547 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Investment Map - Houston, Texas</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<title>Property Comparison – Investment Calculator</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; direction: ltr; }
-#map { flex: 1; height: 100%; }
-.leaflet-popup-content-wrapper {
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-.leaflet-popup-content {
-  margin: 0;
-  min-width: 280px;
-}
-.popup-header {
-  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
-  color: #fff;
-  padding: 14px 16px;
-  border-radius: 12px 12px 0 0;
-}
-.popup-header h3 { font-size: 16px; margin-bottom: 2px; }
-.popup-header .sub { font-size: 12px; color: #aaa; }
-.popup-body { padding: 12px 16px 14px; }
-.popup-body p { font-size: 13px; color: #555; line-height: 1.5; margin-bottom: 8px; direction: ltr; text-align: left; }
-.popup-body .info-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  padding: 4px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-.popup-body .info-row .label { color: #999; }
-.popup-body .info-row .value { color: #333; font-weight: 600; text-align: right; }
-.popup-body .popup-links {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-}
-.popup-body .lennar-link {
-  display: inline-block;
-  font-size: 12px;
-  color: #0f3460;
-  text-decoration: none;
-  font-weight: 600;
-}
-.popup-body .lennar-link:hover { text-decoration: underline; }
-.popup-body .aerial-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  padding: 5px 12px;
-  background: linear-gradient(135deg, #16213e, #0f3460);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-.popup-body .aerial-btn:hover { opacity: 0.85; transform: scale(1.02); }
-.aerial-modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 2000;
-  justify-content: center;
-  align-items: center;
-}
-.aerial-modal-overlay.active { display: flex; }
-.aerial-modal {
-  background: #fff;
-  border-radius: 16px;
-  overflow: hidden;
-  width: 700px;
-  max-width: 90vw;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-.aerial-modal-header {
-  background: linear-gradient(135deg, #16213e, #0f3460);
-  color: #fff;
-  padding: 14px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.aerial-modal-header h3 { font-size: 16px; }
-.aerial-modal-close {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 22px;
-  cursor: pointer;
-  padding: 0 4px;
-  opacity: 0.7;
-}
-.aerial-modal-close:hover { opacity: 1; }
-#aerial-map { width: 100%; height: 420px; }
-.aerial-modal-footer {
-  padding: 10px 20px;
-  font-size: 12px;
-  color: #888;
-  text-align: center;
-  background: #f8f8f8;
-}
-.drive-label {
-  background: rgba(26, 26, 46, 0.85);
-  color: #eee;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-.community-label {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 24px;
-  font-weight: 900;
-  white-space: nowrap;
-  text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 16px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,0.5);
-  letter-spacing: 1px;
-}
-.employer-label {
-  background: rgba(230, 126, 34, 0.95);
-  border: none;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: normal;
-  text-align: center;
-  padding: 4px 10px;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  line-height: 1.3;
-}
-.ring-label {
-  background: none;
-  border: none;
-  color: rgba(15, 52, 96, 0.45);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.map-controls {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 999;
-  display: flex;
-  gap: 6px;
-}
-.map-btn {
-  padding: 8px 14px;
-  background: rgba(26, 26, 46, 0.85);
-  color: #ccc;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 8px;
-  font-size: 13px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  transition: all 0.2s;
-}
-.map-btn:hover { background: rgba(40, 40, 70, 0.9); color: #fff; }
-.map-btn.active { background: #e94560; color: #fff; border-color: #e94560; }
-#resources-btn {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  z-index: 1100;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #e94560, #c0392b);
-  color: #fff;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(233,69,96,0.4);
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#resources-btn:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(233,69,96,0.5); }
-#resources-btn .badge-count {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #f39c12;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#resources-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1200;
-}
-#resources-overlay.active { display: block; }
-#resources-panel {
-  position: fixed;
-  top: 0;
-  left: -420px;
-  width: 400px;
-  max-width: 90vw;
-  height: 100vh;
-  background: #1a1a2e;
-  z-index: 1300;
-  overflow-y: auto;
-  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 4px 0 24px rgba(0,0,0,0.5);
-  direction: ltr;
-}
-#resources-panel.open { left: 0; }
-.res-header {
-  padding: 24px 20px 16px;
-  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
-  border-bottom: 2px solid #e94560;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.res-header h2 { font-size: 18px; color: #fff; }
-.res-close {
-  background: none;
-  border: none;
-  color: #aaa;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0 4px;
-}
-.res-close:hover { color: #fff; }
-.res-card {
-  margin: 12px 16px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.res-card:hover {
-  background: rgba(233,69,96,0.1);
-  border-color: rgba(233,69,96,0.3);
-  transform: translateY(-2px);
-}
-.res-card-body { padding: 16px; }
-.res-card-source {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #e94560;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-.res-card-source .src-icon {
-  width: 18px; height: 18px;
-  border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px;
-}
-.res-card-source .src-icon.facebook { background: #1877f2; color: #fff; }
-.res-card-source .src-icon.instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff; }
-.res-card-source .src-icon.article { background: #2ecc71; color: #fff; }
-.res-card-source .src-icon.youtube { background: #ff0000; color: #fff; }
-.res-card h3 { font-size: 14px; color: #fff; margin-bottom: 6px; line-height: 1.5; }
-.res-card .res-desc { font-size: 12px; color: #aaa; line-height: 1.5; }
-.res-card .res-date { font-size: 10px; color: #666; margin-top: 8px; }
-.res-card .res-arrow { float: right; color: #e94560; font-size: 18px; margin-top: -20px; }
-.res-card video { width: 100%; border-radius: 8px; margin-bottom: 10px; max-height: 500px; background: #000; }
-.res-card .res-link {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; color: #1877f2; text-decoration: none; margin-top: 6px;
-}
-.res-card .res-link:hover { text-decoration: underline; }
-.res-empty-hint { padding: 40px 20px; text-align: center; color: #555; font-size: 13px; }
-@media (max-width: 768px) {
-  body { flex-direction: column; }
-  #map { height: 100vh; }
-  .community-label { font-size: 14px; }
-  .employer-label { font-size: 9px; padding: 2px 6px; }
-  .map-btn { padding: 5px 10px; font-size: 11px; }
-  .map-controls { top: 8px; right: 8px; gap: 4px; }
-  .aerial-modal { width: 95vw; }
-  .aerial-modal-header h3 { font-size: 13px; }
-  #aerial-map { height: 280px; }
-  .aerial-modal-footer { font-size: 11px; padding: 8px 12px; }
-  #resources-panel { width: 100vw; max-width: 100vw; left: -105vw; }
-  #resources-btn { bottom: 16px; left: 16px; width: 46px; height: 46px; font-size: 20px; }
-}
+  :root {
+    --green-bg: #c6efce;
+    --green-border: #70ad47;
+    --blue-header: #2f5496;
+    --blue-section: #4472c4;
+    --yellow-bg: #fff2cc;
+    --light-blue-bg: #ddebf7;
+    --gray-row: #f2f2f2;
+    --white: #ffffff;
+    --label-bg: #d6dce5;
+    --text-dark: #1a1a2e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f8;
+    color: var(--text-dark);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .page-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: var(--blue-header);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  header h1 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  header p {
+    font-size: 0.9rem;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+  }
+
+  .main-card {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  .grid-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scenarios-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr 1fr 1fr;
+    border-bottom: 2px solid #e2e8f0;
+    min-width: 750px;
+  }
+
+  .scenario-header {
+    background: var(--blue-header);
+    color: white;
+    text-align: center;
+    padding: 14px 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    border-right: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .scenario-header:first-child {
+    background: #1a3561;
+    text-align: left;
+    padding-left: 16px;
+    font-size: 0.85rem;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+  }
+
+  .section-title {
+    grid-column: 1 / -1;
+    background: var(--blue-section);
+    color: white;
+    padding: 10px 16px;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .row {
+    display: contents;
+  }
+
+  .row:hover > * {
+    background-color: rgba(0,0,0,0.02);
+  }
+
+  .cell-label {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    background: white;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+  }
+
+  .cell-label.alt { background: var(--label-bg); }
+  .cell-label.gray { background: var(--gray-row); }
+
+  .cell-value {
+    padding: 6px 10px;
+    text-align: center;
+    font-size: 0.88rem;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cell-value.gray { background: var(--gray-row); }
+  .cell-value.yellow { background: var(--yellow-bg); font-weight: 700; }
+  .cell-value.light-blue { background: var(--light-blue-bg); }
+  .cell-value.output { color: #1e40af; font-weight: 500; }
+
+  .cell-value.positive { color: #166534; }
+  .cell-value.negative { color: #991b1b; }
+
+  input.green-input {
+    width: 100%;
+    border: none;
+    background: var(--green-bg);
+    color: #14532d;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 8px 6px;
+    outline: none;
+    border-radius: 4px;
+    transition: all 0.15s;
+    cursor: text;
+  }
+
+  input.green-input:focus {
+    background: #a7f3a0;
+    box-shadow: 0 0 0 2px var(--green-border);
+  }
+
+  input.green-input:hover:not(:focus) {
+    background: #b8f0c0;
+  }
+
+  .cell-value.green-cell {
+    background: var(--green-bg);
+    padding: 4px 8px;
+  }
+
+  .sensitivity-wrapper {
+    padding: 24px 20px;
+    border-top: 2px solid #e2e8f0;
+  }
+
+  .sensitivity-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--blue-header);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--blue-section);
+  }
+
+  .sensitivity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.87rem;
+  }
+
+  .sensitivity-table th {
+    background: var(--blue-header);
+    color: white;
+    padding: 10px 16px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .sensitivity-table th:first-child { text-align: center; }
+
+  .sensitivity-table td {
+    padding: 9px 16px;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .sensitivity-table tr:nth-child(even) td { background: #f8fafc; }
+  .sensitivity-table tr:hover td { background: var(--light-blue-bg); }
+
+  .sensitivity-table th:first-child,
+  .sensitivity-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+  }
+
+  .sensitivity-table td:first-child {
+    font-weight: 600;
+    color: #374151;
+    background: var(--label-bg) !important;
+  }
+
+  .sensitivity-table .good { color: #166534; font-weight: 700; }
+  .sensitivity-table .neutral { color: #111827; font-weight: 500; }
+  .sensitivity-table .bad { color: #991b1b; font-weight: 600; }
+
+  .note {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-left: 3px solid var(--blue-section);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .spacer-row > * {
+    padding: 4px 0;
+    background: #f8fafc;
+  }
+
+  .toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.25);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 8px;
+    line-height: 1;
+    transition: background 0.15s;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .toggle-btn:hover { background: rgba(255,255,255,0.4); }
+
+  .toggle-btn-gray {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 3px;
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 6px;
+    line-height: 1;
+    transition: background 0.15s;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .toggle-btn-gray:hover { background: #cbd5e1; }
+
+  [data-group] {
+    transition: opacity 0.15s;
+  }
+  [data-group].group-hidden {
+    display: none !important;
+  }
+
+  .scenario-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .header-fin-input {
+    width: 48px;
+    border: none;
+    background: rgba(198,239,206,0.85);
+    color: #14532d;
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+    padding: 4px 2px;
+    border-radius: 4px;
+    outline: none;
+    transition: all 0.15s;
+    -moz-appearance: textfield;
+  }
+  .header-fin-input::-webkit-inner-spin-button,
+  .header-fin-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .header-fin-input:focus {
+    background: #a7f3a0;
+    box-shadow: 0 0 0 2px #70ad47;
+  }
+  .header-fin-label {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .reset-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+    font-family: inherit;
+    letter-spacing: 0.2px;
+  }
+  .reset-btn:hover {
+    background: rgba(255,255,255,0.28);
+    border-color: rgba(255,255,255,0.8);
+    transform: scale(1.03);
+  }
+  .reset-btn:active { transform: scale(0.98); }
+
+  @keyframes flashGreen {
+    0%   { background: #a7f3a0; }
+    100% { background: var(--green-bg); }
+  }
+  .input-flash { animation: flashGreen 0.5s ease-out; }
+
+  .footer-note {
+    text-align: center;
+    padding: 16px;
+    font-size: 0.78rem;
+    color: #9ca3af;
+    background: #f9fafb;
+    border-top: 1px solid #e2e8f0;
+    border-radius: 0 0 12px 12px;
+  }
+
+  /* ===== Heatmap ===== */
+  .heatmap-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-top: 16px;
+    overflow: hidden;
+  }
+  .heatmap-header {
+    background: var(--blue-header);
+    color: white;
+    padding: 14px 20px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .heatmap-header:hover { background: #264a85; }
+  .heatmap-body { padding: 16px 20px; }
+  .heatmap-body.collapsed { display: none; }
+  .heatmap-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    font-size: 0.88rem;
+    flex-wrap: wrap;
+  }
+  .heatmap-controls label { font-weight: 600; color: #374151; }
+  .heatmap-controls input {
+    width: 55px;
+    padding: 5px 8px;
+    border: 2px solid var(--green-border);
+    border-radius: 6px;
+    background: var(--green-bg);
+    text-align: center;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .heatmap-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .heatmap-table {
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    min-width: 800px;
+    width: 100%;
+  }
+  .heatmap-table th {
+    background: var(--blue-header);
+    color: white;
+    padding: 7px 6px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .heatmap-table th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: #1a3561;
+    min-width: 60px;
+  }
+  .heatmap-table td {
+    padding: 5px 4px;
+    text-align: center;
+    border: 1px solid rgba(0,0,0,0.06);
+    font-weight: 600;
+    font-size: 0.73rem;
+    white-space: nowrap;
+    transition: transform 0.1s;
+  }
+  .heatmap-table td:hover {
+    transform: scale(1.15);
+    z-index: 5;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    border-radius: 3px;
+  }
+  .heatmap-table td:first-child {
+    background: var(--blue-header) !important;
+    color: white;
+    font-weight: 700;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 60px;
+  }
+  .heatmap-table td:first-child:hover { transform: none; box-shadow: none; }
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    flex-wrap: wrap;
+  }
+  .heatmap-legend-bar {
+    height: 14px;
+    width: 200px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #c00000, #ff6b6b, #ffd4d4, #ffffff, #d4edda, #548235, #006100);
+  }
+
+  /* ===== Notes Section ===== */
+  .notes-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-top: 16px;
+    overflow: hidden;
+  }
+  .notes-header {
+    background: var(--blue-header);
+    color: white;
+    padding: 14px 20px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .notes-header:hover { background: #264a85; }
+  .notes-toggle { font-size: 1.1rem; transition: transform 0.2s; }
+  .notes-body { padding: 0; }
+  .notes-body.collapsed { display: none; }
+  .notes-section-title {
+    background: var(--blue-section);
+    color: white;
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+  .notes-row {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    line-height: 1.65;
+    color: #374151;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .notes-row:nth-child(odd) { background: #f8fafc; }
+  .notes-row:nth-child(even) { background: white; }
+  .notes-row.bullet {
+    padding-left: 28px;
+    position: relative;
+  }
+  .notes-row.bullet::before {
+    content: '•';
+    position: absolute;
+    left: 16px;
+    color: var(--blue-section);
+    font-weight: 700;
+  }
+  .notes-row.disclaimer {
+    color: #6b7280;
+    font-size: 0.8rem;
+  }
+
+  /* ===== Mobile ===== */
+  @media (max-width: 768px) {
+    body { padding: 8px; }
+    header { padding: 16px; flex-direction: column; align-items: stretch; text-align: center; }
+    header h1 { font-size: 1.25rem; }
+    header p { font-size: 0.8rem; }
+    .legend { justify-content: center; gap: 8px; }
+    .legend-item { font-size: 0.72rem; padding: 3px 8px; }
+    .reset-btn { align-self: center; padding: 6px 14px; font-size: 0.82rem; }
+    .grid-scroll-wrapper::after {
+      content: '← Scroll →';
+      display: block;
+      text-align: center;
+      font-size: 0.72rem;
+      color: #9ca3af;
+      padding: 4px 0;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.9), transparent);
+    }
+    .grid-scroll-wrapper.scrolled::after { display: none; }
+    .scenarios-grid { grid-template-columns: 140px minmax(130px,1fr) minmax(130px,1fr) minmax(130px,1fr); }
+    .cell-label { font-size: 0.75rem; padding: 6px 8px; box-shadow: 3px 0 6px rgba(0,0,0,0.08); }
+    .scenario-header:first-child { box-shadow: 3px 0 6px rgba(0,0,0,0.15); }
+    .cell-value { font-size: 0.8rem; padding: 5px 6px; }
+    .section-title { font-size: 0.82rem; padding: 8px 10px; }
+    .scenario-header { padding: 10px 6px; font-size: 0.85rem; }
+    .scenario-header:first-child { font-size: 0.75rem; padding-left: 8px; }
+    input.green-input { font-size: 0.82rem; padding: 6px 4px; }
+    .header-fin-input { width: 40px; font-size: 0.88rem; }
+    .header-fin-label { font-size: 0.85rem; }
+    .heatmap-body { padding: 10px; }
+    .heatmap-table { font-size: 0.68rem; }
+    .heatmap-table th { font-size: 0.65rem; padding: 5px 3px; }
+    .heatmap-table td { font-size: 0.65rem; padding: 4px 2px; }
+    .heatmap-table td:first-child { box-shadow: 3px 0 6px rgba(0,0,0,0.08); }
+    .heatmap-table th:first-child { box-shadow: 3px 0 6px rgba(0,0,0,0.15); }
+    .sensitivity-wrapper { padding: 16px 10px; overflow-x: auto; }
+    .sensitivity-table { font-size: 0.78rem; min-width: 500px; }
+    .sensitivity-table th { padding: 8px 10px; }
+    .sensitivity-table td { padding: 7px 10px; }
+    .sensitivity-table th:first-child,
+    .sensitivity-table td:first-child { box-shadow: 3px 0 6px rgba(0,0,0,0.08); }
+  }
+
+  /* ===== Tabs ===== */
+  .tab-nav {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .tab-btn {
+    padding: 8px 24px;
+    border: 2px solid #4472c4;
+    background: white;
+    color: #4472c4;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tab-btn:first-child { border-radius: 8px 0 0 8px; }
+  .tab-btn:last-child { border-radius: 0 8px 8px 0; }
+  .tab-btn.active { background: #4472c4; color: white; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ===== Portfolio Table ===== */
+  .portfolio-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 16px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+  }
+  .portfolio-card h2 {
+    text-align: center;
+    color: #333;
+    font-size: 1.1rem;
+    margin: 0 0 12px;
+  }
+  .ptable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    min-width: 900px;
+  }
+  .ptable th {
+    background: #4472c4;
+    color: white;
+    padding: 8px 6px;
+    text-align: center;
+    white-space: nowrap;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+  }
+  .ptable th.section-sep {
+    background: #365f9e;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+  }
+  .ptable td {
+    padding: 6px 6px;
+    text-align: center;
+    border-bottom: 1px solid #e8eaed;
+    white-space: nowrap;
+  }
+  .ptable tr:nth-child(even) { background: #f8f9fb; }
+  .ptable tr:hover { background: #eef3fb; }
+  .ptable tr.totals-row {
+    background: #edf2f9 !important;
+    font-weight: 700;
+    border-top: 2px solid #4472c4;
+  }
+  .ptable td.addr {
+    text-align: left;
+    font-size: 0.72rem;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ptable .pos { color: #2e7d32; }
+  .ptable .neg { color: #c62828; }
+  .ptable .highlight {
+    background: #e8f5e9;
+    font-weight: 700;
+    color: #2e7d32;
+  }
+  .portfolio-note {
+    font-size: 0.72rem;
+    color: #888;
+    text-align: center;
+    margin-top: 8px;
+  }
 </style>
 </head>
 <body>
-
-<div id="map" style="position: relative; width: 100%; height: 100vh;">
-  <div class="map-controls">
-    <button class="map-btn active" onclick="setLayer('street')">Map</button>
-    <button class="map-btn" onclick="setLayer('satellite')">Satellite</button>
-  </div>
-</div>
-
-<button id="resources-btn" onclick="toggleResources()" title="Investor Content & Resources">
-  📰
-  <span class="badge-count" id="res-count"></span>
-</button>
-
-<div id="resources-overlay" onclick="toggleResources()"></div>
-<div id="resources-panel">
-  <div class="res-header">
-    <h2>📰 Investor Content</h2>
-    <button class="res-close" onclick="toggleResources()">&times;</button>
-  </div>
-  <div id="resources-list"></div>
-</div>
-
-<div class="aerial-modal-overlay" id="aerialOverlay">
-  <div class="aerial-modal">
-    <div class="aerial-modal-header">
-      <h3 id="aerialTitle"></h3>
-      <button class="aerial-modal-close" onclick="closeAerial()">&times;</button>
+<div class="page-wrapper">
+  <header>
+    <div>
+      <h1>📊 Property Comparison – Investment Calculator</h1>
     </div>
-    <div id="aerial-map"></div>
-    <div class="aerial-modal-footer" id="aerialFooter"></div>
+    <button class="reset-btn" onclick="resetDefaults()" title="Reset all fields to default values">
+      ↺ Reset to Defaults
+    </button>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#c6efce; border:1px solid #70ad47;"></div>
+        Editable field
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#ddebf7; border:1px solid #4472c4;"></div>
+        Calculated result
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#fff2cc; border:1px solid #f0c040;"></div>
+        Total equity required
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('calc')">🧮 Calculator</button>
+    <button class="tab-btn" onclick="switchTab('portfolio')">🏠 Property Portfolio</button>
+  </div>
+
+  <!-- TAB 1: Calculator -->
+  <div class="tab-content active" id="tab-calc">
+  <div class="main-card">
+    <div style="text-align:center; padding:12px 16px 4px;">
+      <span style="display:inline-block; background:#e8f5e9; color:#2e7d32; font-size:0.82rem; font-weight:600; padding:5px 18px; border-radius:20px; letter-spacing:0.3px;">Edit the green fields for instant calculations</span>
+    </div>
+    <div class="grid-scroll-wrapper" id="gridScrollWrapper">
+    <div class="scenarios-grid" id="mainGrid">
+
+      <!-- Headers -->
+      <div class="scenario-header">Base Data</div>
+      <div class="scenario-header" id="h0"><input class="header-fin-input" id="headerFin_0" type="number" value="0" min="0" max="100" onchange="syncFinFromHeader()" oninput="syncFinFromHeader()"><span class="header-fin-label">% financing</span></div>
+      <div class="scenario-header" id="h1"><input class="header-fin-input" id="headerFin_1" type="number" value="50" min="0" max="100" onchange="syncFinFromHeader()" oninput="syncFinFromHeader()"><span class="header-fin-label">% financing</span></div>
+      <div class="scenario-header" id="h2"><input class="header-fin-input" id="headerFin_2" type="number" value="70" min="0" max="100" onchange="syncFinFromHeader()" oninput="syncFinFromHeader()"><span class="header-fin-label">% financing</span></div>
+
+      <!-- Section: Input Data -->
+      <div class="section-title">Input Data (green fields – editable)</div>
+
+      <div class="cell-label alt">House Price</div>
+      <div class="cell-value green-cell"><input class="green-input" id="housePrice_0" type="text" value="200,000" onfocus="unformatInput(this)" onblur="formatInput(this)" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="housePrice_1" type="text" value="200,000" onfocus="unformatInput(this)" onblur="formatInput(this)" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="housePrice_2" type="text" value="200,000" onfocus="unformatInput(this)" onblur="formatInput(this)" oninput="recalc()"></div>
+
+      <div class="cell-label">Monthly Rent</div>
+      <div class="cell-value green-cell"><input class="green-input" id="rent_0" type="text" value="1,850" onfocus="unformatInput(this)" onblur="formatInput(this)" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="rent_1" type="text" value="1,850" onfocus="unformatInput(this)" onblur="formatInput(this)" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="rent_2" type="text" value="1,850" onfocus="unformatInput(this)" onblur="formatInput(this)" oninput="recalc()"></div>
+
+      <!-- Section: Annual Fixed Expenses -->
+      <div class="section-title">Annual Expenses (Fixed)</div>
+
+      <div class="cell-label alt">Property Tax (%)</div>
+      <div class="cell-value gray output" id="propertyTaxPct_0">3.2%</div>
+      <div class="cell-value gray output" id="propertyTaxPct_1">3.2%</div>
+      <div class="cell-value gray output" id="propertyTaxPct_2">3.2%</div>
+
+      <div class="cell-label">Property Insurance (annual)</div>
+      <div class="cell-value output" id="ins_0">$1,150</div>
+      <div class="cell-value output" id="ins_1">$1,150</div>
+      <div class="cell-value output" id="ins_2">$1,150</div>
+
+      <div class="cell-label alt">Property Management (%)</div>
+      <div class="cell-value gray output" id="mgmt_0">8.0%</div>
+      <div class="cell-value gray output" id="mgmt_1">8.0%</div>
+      <div class="cell-value gray output" id="mgmt_2">8.0%</div>
+
+      <div class="cell-label">HOA (annual)</div>
+      <div class="cell-value output" id="hoa_0">$900</div>
+      <div class="cell-value output" id="hoa_1">$900</div>
+      <div class="cell-value output" id="hoa_2">$900</div>
+
+      <div class="cell-label alt">Vacancy (%)</div>
+      <div class="cell-value gray output" id="vac_0">4.0%</div>
+      <div class="cell-value gray output" id="vac_1">4.0%</div>
+      <div class="cell-value gray output" id="vac_2">4.0%</div>
+
+      <!-- Section: Financing -->
+      <div class="section-title">Financing Parameters</div>
+
+      <div class="cell-label alt">Expected Interest Rate</div>
+      <div class="cell-value green-cell"><input class="green-input" id="rate_0" type="number" value="6.5" step="0.1" onchange="recalc()" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="rate_1" type="number" value="6.5" step="0.1" onchange="recalc()" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="rate_2" type="number" value="6.5" step="0.1" onchange="recalc()" oninput="recalc()"></div>
+
+      <div class="cell-label">Interest-Only Years</div>
+      <div class="cell-value green-cell"><input class="green-input" id="ioYears_0" type="number" value="5" onchange="recalc()" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="ioYears_1" type="number" value="5" onchange="recalc()" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="ioYears_2" type="number" value="5" onchange="recalc()" oninput="recalc()"></div>
+
+      <div class="cell-label alt">Principal + Interest Years (P+I)</div>
+      <div class="cell-value green-cell"><input class="green-input" id="piYears_0" type="number" value="15" onchange="recalc()" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="piYears_1" type="number" value="15" onchange="recalc()" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="piYears_2" type="number" value="15" onchange="recalc()" oninput="recalc()"></div>
+
+      <!-- Section: Scenario -->
+      <div class="section-title">Scenario</div>
+
+      <div class="cell-label">Holding Period (years)</div>
+      <div class="cell-value green-cell"><input class="green-input" id="holding_0" type="number" value="10" onchange="recalc()" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="holding_1" type="number" value="10" onchange="recalc()" oninput="recalc()"></div>
+      <div class="cell-value green-cell"><input class="green-input" id="holding_2" type="number" value="10" onchange="recalc()" oninput="recalc()"></div>
+
+      <!-- Section: How Much Am I Putting In? -->
+      <div class="section-title">How Much Am I Putting In? (Equity)</div>
+
+      <div class="cell-label alt">House Price</div>
+      <div class="cell-value output" id="housePriceOut_0">$200,000</div>
+      <div class="cell-value output" id="housePriceOut_1">$200,000</div>
+      <div class="cell-value output" id="housePriceOut_2">$200,000</div>
+
+      <div class="cell-label">Investment Advisory Fee (Aspect)</div>
+      <div class="cell-value output">$12,000</div>
+      <div class="cell-value output">$12,000</div>
+      <div class="cell-value output">$12,000</div>
+
+      <div class="cell-label alt" style="display:flex; align-items:center; justify-content:space-between;">
+        <span>Setup + Closing Costs</span>
+        <span class="toggle-btn-gray" id="btn-closing" onclick="toggleGroup('closing')" title="Show/Hide breakdown">＋</span>
+      </div>
+      <div class="cell-value gray output" id="closing_0">$9,047</div>
+      <div class="cell-value gray output" id="closing_1">$9,047</div>
+      <div class="cell-value gray output" id="closing_2">$9,047</div>
+
+      <!-- Closing cost breakdown (collapsed) -->
+      <div class="cell-label gray group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">LLC + EIN Setup + Filing Fee</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$800</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$800</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$800</div>
+
+      <div class="cell-label group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Loan Origination (fee, points)</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$2,080</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$2,080</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$2,080</div>
+
+      <div class="cell-label gray group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Property Appraisal</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+
+      <div class="cell-label group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Home Inspection</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+
+      <div class="cell-label gray group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Blinds / Curtains</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+
+      <div class="cell-label group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Escrow Fee</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$600</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$600</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$600</div>
+
+      <div class="cell-label gray group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Contractor / Advisory Fee</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$2,000</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$2,000</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$2,000</div>
+
+      <div class="cell-label group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Survey + Policy + Fees + Attorney</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$1,567</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$1,567</div>
+      <div class="cell-value group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$1,567</div>
+
+      <div class="cell-label gray group-hidden" data-group="closing" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Loan Origination Fee + Points</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+      <div class="cell-value gray group-hidden" data-group="closing" style="font-size:0.8rem; color:#6b7280;">$500</div>
+
+      <div class="cell-label">Total Acquisition Cost</div>
+      <div class="cell-value output" id="totalCost_0">$221,047</div>
+      <div class="cell-value output" id="totalCost_1">$221,047</div>
+      <div class="cell-value output" id="totalCost_2">$221,047</div>
+
+      <div class="cell-label alt">Mortgage (by financing %)</div>
+      <div class="cell-value gray output" id="mortgage_0">$0</div>
+      <div class="cell-value gray output" id="mortgage_1">$100,000</div>
+      <div class="cell-value gray output" id="mortgage_2">$140,000</div>
+
+      <div class="cell-label">Down Payment</div>
+      <div class="cell-value output" id="downPayment_0">$221,047</div>
+      <div class="cell-value output" id="downPayment_1">$121,047</div>
+      <div class="cell-value output" id="downPayment_2">$81,047</div>
+
+      <div class="cell-label alt">Additional Equity (Escrow reserve + available)</div>
+      <div class="cell-value gray output">$10,000</div>
+      <div class="cell-value gray output">$10,000</div>
+      <div class="cell-value gray output">$10,000</div>
+
+      <div class="cell-label" style="font-weight:700; background:#fff2cc;">Total Equity Required ($)</div>
+      <div class="cell-value yellow" id="totalEquity_0">$231,047</div>
+      <div class="cell-value yellow" id="totalEquity_1">$131,047</div>
+      <div class="cell-value yellow" id="totalEquity_2">$91,047</div>
+
+      <!-- Section: Monthly Cash Flow -->
+      <div class="section-title">How Much Is Left Each Month?</div>
+
+      <div class="cell-label alt">Monthly Rental Income</div>
+      <div class="cell-value gray output" id="rentIn_0">$1,850</div>
+      <div class="cell-value gray output" id="rentIn_1">$1,850</div>
+      <div class="cell-value gray output" id="rentIn_2">$1,850</div>
+
+      <div class="cell-label" style="display:flex; align-items:center; justify-content:space-between;">
+        <span>Monthly Expenses (tax+insurance+mgmt+HOA+...)</span>
+        <span class="toggle-btn-gray" id="btn-monthly" onclick="toggleGroup('monthly')" title="Show/Hide breakdown">＋</span>
+      </div>
+      <div class="cell-value output" id="monthlyExp_0">$1,023</div>
+      <div class="cell-value output" id="monthlyExp_1">$1,023</div>
+      <div class="cell-value output" id="monthlyExp_2">$1,023</div>
+
+      <div class="cell-label alt">Monthly Financing Payment (avg)</div>
+      <div class="cell-value gray output" id="monthlyFinancing_0">$0</div>
+      <div class="cell-value gray output" id="monthlyFinancing_1">$650</div>
+      <div class="cell-value gray output" id="monthlyFinancing_2">$910</div>
+
+      <!-- Monthly breakdown (collapsed) -->
+      <div class="cell-label group-hidden" data-group="monthly" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Property Tax (monthly)</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="propTaxM_0">$533</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="propTaxM_1">$533</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="propTaxM_2">$533</div>
+
+      <div class="cell-label gray group-hidden" data-group="monthly" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Insurance (monthly)</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$96</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$96</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$96</div>
+
+      <div class="cell-label group-hidden" data-group="monthly" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Property Management (monthly)</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="mgmtM_0">$148</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="mgmtM_1">$148</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="mgmtM_2">$148</div>
+
+      <div class="cell-label gray group-hidden" data-group="monthly" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">HOA (monthly)</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$75</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$75</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$75</div>
+
+      <div class="cell-label group-hidden" data-group="monthly" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Vacancy (monthly)</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="vacM_0">$74</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="vacM_1">$74</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="vacM_2">$74</div>
+
+      <div class="cell-label gray group-hidden" data-group="monthly" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Repairs &amp; Maintenance (monthly)</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$50</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$50</div>
+      <div class="cell-value gray group-hidden" data-group="monthly" style="font-size:0.8rem;">$50</div>
+
+      <div class="cell-label group-hidden" data-group="monthly" style="padding-left:26px; font-size:0.78rem; color:#6b7280;">Tenant Turnover (monthly)</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="tenantM_0">$51</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="tenantM_1">$51</div>
+      <div class="cell-value group-hidden" data-group="monthly" style="font-size:0.8rem;" id="tenantM_2">$51</div>
+
+      <!-- Result rows -->
+      <div class="cell-label" style="font-weight:700; background:var(--light-blue-bg);">Monthly Cash Flow ("Air")</div>
+      <div class="cell-value light-blue positive" id="monthlyCash_0">+$827</div>
+      <div class="cell-value light-blue" id="monthlyCash_1">$177</div>
+      <div class="cell-value light-blue negative" id="monthlyCash_2">-$83</div>
+
+      <div class="cell-label" style="font-weight:700; background:var(--light-blue-bg);">Annual Cash Flow</div>
+      <div class="cell-value light-blue positive" id="annualCash_0">+$9,924</div>
+      <div class="cell-value light-blue" id="annualCash_1">$2,124</div>
+      <div class="cell-value light-blue negative" id="annualCash_2">-$996</div>
+
+    </div><!-- end scenarios-grid -->
+    </div><!-- end grid-scroll-wrapper -->
+
+    <!-- Sensitivity Analysis -->
+    <div class="sensitivity-wrapper">
+      <div class="sensitivity-title">📈 Return Sensitivity by Annual Appreciation Rate</div>
+      <table class="sensitivity-table">
+        <thead>
+          <tr>
+            <th>Annual Appreciation</th>
+            <th id="sh0">0% financing</th>
+            <th id="sh1">50% financing</th>
+            <th id="sh2">70% financing</th>
+          </tr>
+        </thead>
+        <tbody id="sensitivityBody"></tbody>
+      </table>
+      <div class="note">* Sale costs: 7% of sale price | Mortgage rate: I.O in initial years, then P+I</div>
+    </div>
+
+  </div><!-- end main-card -->
+
+  <!-- Heatmap Section -->
+  <div class="heatmap-card">
+    <div class="heatmap-header" onclick="toggleHeatmap()">
+      <span>🔥 Heat Map – Annual Return by Holding Period &amp; Financing %</span>
+      <span class="notes-toggle" id="heatmapToggle">▼</span>
+    </div>
+    <div class="heatmap-body collapsed" id="heatmapBody">
+      <div style="text-align:left; margin-bottom:6px;">
+        <span style="color:#888; font-size:0.7rem;">Based on 4% annual appreciation</span>
+      </div>
+      <div class="heatmap-scroll">
+        <table class="heatmap-table" id="heatmapTable">
+          <thead id="heatmapHead"></thead>
+          <tbody id="heatmapBody2"></tbody>
+        </table>
+      </div>
+      <div class="heatmap-legend">
+        <span>Negative return</span>
+        <div class="heatmap-legend-bar"></div>
+        <span>High return</span>
+      </div>
+      <div class="note" style="margin-top:10px;">* Table data is static and does not update with the fields above. Sale costs: 7% | I.O for first 5 years, then P+I</div>
+    </div>
+  </div>
+
+  <!-- Notes & Explanations -->
+  <div class="notes-card">
+    <div class="notes-header" onclick="toggleNotes()">
+      <span>📋 Notes &amp; Explanations</span>
+      <span class="notes-toggle" id="notesToggle">▼</span>
+    </div>
+    <div class="notes-body collapsed" id="notesBody">
+
+      <div class="notes-section-title">Property Data – Explanation</div>
+      <div class="notes-row"> - HOA payment: considered an advantage for the neighborhood despite the ongoing cost. It ensures maintenance, enforcement, and upkeep of the community's appearance. It raises demand and preserves a percentage of owner-occupants. Neighborhoods without HOA tend to deteriorate over time.</div>
+      <div class="notes-row"> - Over the past 5 years, the average annual appreciation in similar master-planned communities in the Houston metro area was around 5.4%. This does not predict future performance, but given current market conditions and attractive prices, we present it as a forward-looking estimate. The sensitivity table at the bottom examines expected annual ROI based on different appreciation scenarios.</div>
+      <div class="notes-row"> - In Texas, property tax rates vary by neighborhood and are determined by many factors. Property tax in the early years of a community is set in advance and is expected to be derived from the purchase price.</div>
+      <div class="notes-row"> - Score assigned via AI systems – a comprehensive review of the specific community by property type. Metrics reviewed: area appreciation potential, rental demand (vacancy risk), school district quality, infrastructure, and accessibility.</div>
+
+      <div class="notes-section-title">Financial Data – Explanation</div>
+      <div class="notes-row"> - The amount required as equity to complete the transaction – made up of equity to the builder, initial costs including property setup and closing costs.</div>
+      <div class="notes-row"> - The lender requires pre-funding an Escrow account with one year of property tax and one year of insurance. They also require liquid funds in the account for 3–4 months of projected monthly payments in case of vacancy.</div>
+      <div class="notes-row">Loan – Financing Percentage – The proforma presents a loan at 65% LTV in order to achieve more attractive rates and minimize the risk of negative cash flow. We can examine a higher loan at purchase to improve return metrics and reduce required equity.</div>
+      <div class="notes-row"> - In the U.S., the final interest rate including exit penalties is only known after completing the underwriting process. It's always possible to reduce the annual interest rate by paying more "points" (origination and setup fees) or increasing exit penalties. The goal is to obtain optimal terms and flexibility for future refinancing.</div>
+      <div class="notes-row"> - The loan is structured with an initial interest-only period, followed immediately by a principal + interest period. The goal is for the loan to remain in place until the mortgage is paid off, without needing to return or "balloon" early. A future refinance can reduce the monthly payment.</div>
+
+      <div class="notes-section-title">Revenue, Expense Projections, and Return Metrics – Explanation</div>
+      <div class="notes-row"> - Potential rent was determined based on recently leased comparable homes, reviewed on sites like Rentometer, Zillow, MLS, Redfin, HAR, and others. Rent will of course vary from property to property even among identical units due to market conditions, listing timing, and other factors.</div>
+      <div class="notes-row"> - Insurance varies based on quotes reviewed prior to purchase for this property type. Insurance covers natural disasters, but since this is not a flood zone, it does not include flood coverage (not required by the mortgage). Flood insurance can be added for an additional premium.</div>
+      <div class="notes-row"> - We estimated the vacancy period at 4%. Sometimes a property will have long-term tenants and the figure will improve; other times turnover will be higher. 4% is the average for this property type in the area – there is no guarantee of actual results.</div>
+      <div class="notes-row"> - This is a brand-new builder home with full warranty on all systems and structure. Even so, tenant turnover may require repainting, carpet replacement, or other updates. In the U.S., it's standard to freshen the unit with each new tenant. Unexpected items may arise. Anything that is the tenant's responsibility will be deducted from the security deposit collected at lease start.</div>
+      <div class="notes-row"> - We created a sensitivity analysis table showing annual ROI figures based on different annual appreciation rates. The 5-year historical average was around 5.3%, but it's important to understand the sensitivities (calculation shown at the bottom of each table).</div>
+      <div class="notes-row"> - Reflects the profit on the accumulated cash from the rental period plus the appreciation gain at sale – after deducting selling costs (typically 5–6% brokerage and 1–2% title, so we've included this deduction).</div>
+
+      <div class="notes-section-title">Costs – Explanation</div>
+      <div class="notes-row"> - The fee we receive from the investor covers end-to-end transaction management: reviewing multiple deals, negotiating, coordinating the group, securing special terms (from builders, lenders, and property managers), assisting with entity formation, bank account setup, building an operational infrastructure, coordinating advisors and professionals (lender, realtor/broker, CPA, attorney, title company, architect, and additional consultants), and ongoing support with all relevant parties. Our service is managerial and advisory, focused on leading the process for foreign investors, creating a professional and transparent framework that protects the investor's interests through key handover, engagement with the management company, and ongoing support. Similar to our activity in Israel, the cost of our advisory service is expected to be lower than the various advantages and savings we achieve for investors.</div>
+      <div class="notes-row"> - LLC formation, obtaining an EIN number (similar to a business registration number), and annual filing fees. Payment goes directly to the office and is part of the general costs. The attorney's office is located in Tel Aviv and an advisory call can be scheduled for a nominal fee. The "setup" amount is only relevant for the first property.</div>
+      <div class="notes-row">Property setup costs, closing costs, loan origination costs, and other fees may vary between properties, loans, and homes. This is an initial estimate intended to be as accurate as possible.</div>
+      <div class="notes-row">After purchasing the property and before handover, we will conduct a home inspection so that the builder fixes all deficiencies noted in the report. It is recommended to conduct an additional inspection after one year, at the end of the builder's first warranty period.</div>
+
+      <div class="notes-section-title">Key Points &amp; Investment Advantages</div>
+      <div class="notes-row bullet">The current dollar exchange rate is at a historic low – a significant currency advantage</div>
+      <div class="notes-row bullet">A developing neighborhood in an area with significant commercial and residential renewal</div>
+      <div class="notes-row bullet">The area is characterized by high rental demand – the goal was to identify areas where the likelihood of vacancy is very low</div>
+      <div class="notes-row bullet">Real estate investment may provide protection against inflation</div>
+      <div class="notes-row bullet">We tried to present the proforma conservatively – reality may improve the numbers</div>
+      <div class="notes-row bullet">Opportunity to build a property portfolio – pension income ('Trinity model')</div>
+      <div class="notes-row bullet">Refinancing option opens the possibility of returning capital from the deal, purchasing additional properties, and reducing the interest rate</div>
+      <div class="notes-row bullet">The proforma ignores rent increases – rising monthly income enables immediate refinancing and improved terms</div>
+
+      <div class="notes-section-title">Disclosure &amp; Disclaimer</div>
+      <div class="notes-row disclaimer">The proforma presented above is for informational and illustrative purposes only and does not constitute an offer, solicitation, investment advice, recommendation to purchase, or any commitment to execute a transaction.</div>
+      <div class="notes-row disclaimer">All projections and estimates contained in this document, including rental income, operating expenses, occupancy rates, appreciation rates, cap rates, returns, financing terms, and tax assumptions, are based on market data, third-party sources, historical trends, and reasonable assumptions as of the date of preparation. In practice, real estate investment involves risks including changes in market conditions, interest rate fluctuations, regulatory or tax changes, occupancy and tenant risks, unexpected expenses, maintenance or repair costs, and various delays.</div>
+      <div class="notes-row disclaimer">This document should not be construed as a representation or warranty, express or implied, regarding the accuracy or completeness of the data. Each investor is requested to conduct independent due diligence and consult their own legal, tax, and financial advisors before making an investment decision.</div>
+      <div class="notes-row disclaimer">Past performance or historical data does not constitute a commitment or guarantee of future performance.</div>
+      <div class="notes-row disclaimer">The figures in the table are not certain – they are projected estimates based on our review with professional parties, neighboring communities, and public data sources such as MLS, HAR, Zillow, Redfin, etc.</div>
+      <div class="notes-row disclaimer">The data presented in the table is not final and may change during the underwriting and closing process, including initial costs, loan interest rate, closing costs, final property price, rent levels, and more.</div>
+
+    </div>
+  </div><!-- end notes-card -->
+  </div><!-- end tab-calc -->
+
+  <!-- TAB 2: Portfolio -->
+  <div class="tab-content" id="tab-portfolio">
+    <div class="portfolio-card">
+      <h2>🏠 Property Portfolio – Recent Purchases</h2>
+      <div style="overflow-x:auto;">
+        <table class="ptable" id="portfolioTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Address</th>
+              <th>Date</th>
+              <th>Purchase Price (incl. advisory)</th>
+              <th>Closing Costs</th>
+              <th>Post-Purchase Exp.</th>
+              <th>Total Investment<br>incl. advisory fee</th>
+              <th>Rent / Month</th>
+              <th>HOA</th>
+              <th>Insurance</th>
+              <th>Property Tax</th>
+              <th>Mgmt 8%</th>
+              <th>Vacancy 4%*</th>
+              <th>Maintenance*</th>
+              <th>Total Expenses</th>
+              <th>Net / Month</th>
+              <th>Net / Year</th>
+              <th>Rental Yield Only<br>(excl. appreciation)</th>
+            </tr>
+          </thead>
+          <tbody id="portfolioBody"></tbody>
+        </table>
+      </div>
+      <div class="portfolio-note">No financing · All data is real from signed contracts</div>
+      <div class="portfolio-note">* In practice these costs were not spent – this is a "reserve fund" being built up for future needs.</div>
+    </div>
+  </div><!-- end tab-portfolio -->
+
+  <div class="footer-note">
+    This tool is designed to compare U.S. real estate investment scenarios · All calculations are for illustration purposes only
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const HOUSTON_CENTER = [29.7604, -95.3698];
+function syncFinFromHeader() { recalc(); }
 
-const communities = [
-  {
-    id: 'crosby', name: 'Crosby', area: 'East Houston',
-    lat: 29.9119, lng: -95.0624, color: '#e94560', builder: 'Lennar',
-    communities: 'Indian Springs, Sweetgrass Village, Newport Preserve, Crosby Farms',
-    priceRange: '$237K - $320K', schoolDistrict: 'Crosby ISD',
-    description: 'East Houston. Close to the Port of Houston and Lake Houston. Easy access to I-90 and the Grand Parkway expansion. Attractive prices with high growth potential.',
-    highlights: ['Near Lake Houston', 'Grand Parkway expansion', 'Port of Houston access'],
-    url: 'https://www.lennar.com/new-homes/texas/houston/crosby',
-    driveTime: '~30 min', driveMinutes: 30,
-    aerialLat: 29.9456, aerialLng: -95.1066, aerialZoom: 17,
-    aerialNote: 'Synova neighborhood in Crosby – new homes under construction (Autumn Hts Ln)'
-  },
-  {
-    id: 'anniston', name: 'Anniston', area: 'Katy, West Houston',
-    lat: 29.8485, lng: -95.8180, color: '#f39c12', builder: 'Lennar',
-    communities: 'Anniston (5 collections, 16 floor plans)',
-    priceRange: '$268K - $510K', schoolDistrict: 'Katy ISD',
-    description: 'West Houston, in the Katy area. New master-planned community with a lake, recreation center, and pool. Close to SH-99 and I-10. Excellent schools in Katy ISD.',
-    highlights: ['Katy ISD schools', 'Lake + recreation center', 'Near I-10 & SH-99'],
-    url: 'https://www.lennar.com/new-homes/texas/houston/katy/anniston',
-    driveTime: '~35 min', driveMinutes: 35,
-    aerialLat: 29.8693, aerialLng: -95.8357, aerialZoom: 17,
-    aerialNote: 'Anniston neighborhood in Katy – new construction near Harvest Wheat Ln'
-  },
-  {
-    id: 'sila', name: 'Sila', area: 'Huffman, NE Houston',
-    lat: 30.0455, lng: -95.1080, color: '#2ecc71', builder: 'Lennar',
-    communities: 'Sila (Cottage, Wellton, Avante Collections)',
-    priceRange: '$250K - $380K', schoolDistrict: 'Huffman ISD',
-    description: 'Northeast Houston, in the Huffman area. A forested community with walking trails, a pool, and a pickleball court. Easy access to I-69.',
-    highlights: ['Forest views', 'Pool + pickleball', 'Near I-69'],
-    url: 'https://www.lennar.com/new-homes/texas/houston/huffman/sila',
-    driveTime: '~35 min', driveMinutes: 35,
-    aerialLat: 30.1269, aerialLng: -95.1176, aerialZoom: 17,
-    aerialNote: 'Sila neighborhood in Huffman – new construction amid forest land (Prunella Ln)'
-  },
-  {
-    id: 'new-caney', name: 'New Caney', area: 'North Houston',
-    lat: 30.1528, lng: -95.1942, color: '#9b59b6', builder: 'Lennar',
-    communities: 'The Trails, Tavola, Tavola West, Pinewood at Grand Texas',
-    priceRange: '$230K - $350K', schoolDistrict: 'New Caney ISD',
-    description: 'North Houston. Several large communities including Tavola (1,560 acres). Close to Valley Ranch Town Center, Big Rivers Water Park, and US-59.',
-    highlights: ['Tavola – 1,560 acres', 'Valley Ranch Town Center', 'Grand Parkway access'],
-    url: 'https://www.lennar.com/new-homes/texas/houston/new-caney',
-    driveTime: '~40 min', driveMinutes: 40,
-    aerialLat: 30.1713, aerialLng: -95.2178, aerialZoom: 17,
-    aerialNote: 'Tavola West in New Caney – new homes under construction (Via Aurelia Dr)'
-  },
-  {
-    id: 'hockley', name: 'Hockley', area: 'NW Houston',
-    lat: 30.07, lng: -95.87, color: '#1abc9c', builder: 'Lennar',
-    communities: 'The Grand Prairie (The Highlands), Cypress Green, Dellrose',
-    priceRange: '$246K - $427K', schoolDistrict: 'Waller ISD',
-    description: 'Northwest Houston. The Grand Prairie – a master-planned community on 1,730 acres with a 70-acre lake, pools, and recreation amenities. Close to US-290 and the Grand Parkway.',
-    highlights: ['70-acre lake', 'Starlight recreation complex', 'Near US-290'],
-    url: 'https://www.lennar.com/new-homes/texas/houston/hockley',
-    driveTime: '~40 min', driveMinutes: 40,
-    aerialLat: 30.07, aerialLng: -95.87, aerialZoom: 16,
-    aerialNote: 'The Grand Prairie in Hockley – new community with a central lake'
-  },
-  {
-    id: 'lago-mar', name: 'Lago Mar', area: 'Texas City, South Houston',
-    lat: 29.375, lng: -94.985, color: '#3498db', builder: 'Lennar + 13 builders',
-    communities: 'Lago Mar (multiple neighborhoods & builders)',
-    priceRange: '$260K - $510K', schoolDistrict: 'Dickinson ISD',
-    description: 'South Houston, near Texas City. A 2,033-acre community with a 12-acre crystal lagoon, white sand beach, restaurant, and club. 4,500 homes planned.',
-    highlights: ['12-acre crystal lagoon', 'Club + infinity pool', 'Near Galveston'],
-    url: 'https://lagomarintexascity.com/',
-    driveTime: '~45 min', driveMinutes: 45,
-    aerialLat: 29.375, aerialLng: -94.985, aerialZoom: 15,
-    aerialNote: 'Lago Mar in Texas City – community with a massive crystal lagoon'
+function unformatInput(el) { el.value = el.value.replace(/,/g, ''); }
+function formatInput(el) {
+  const num = parseFloat(el.value.replace(/,/g, ''));
+  if (!isNaN(num)) el.value = Math.round(num).toLocaleString('en-US');
+}
+
+function PMT(rate, nper, pv) {
+  if (rate === 0) return -pv / nper;
+  return rate * pv / (1 - Math.pow(1 + rate, -nper));
+}
+
+function FV(rate, nper, pmt, pv) {
+  if (rate === 0) return -(pv + pmt * nper);
+  return -(pv * Math.pow(1 + rate, nper) + pmt * (Math.pow(1 + rate, nper) - 1) / rate);
+}
+
+const PROPERTY_TAX = 0.032;
+const INSURANCE = 1150;
+const MGMT_FEE = 0.08;
+const HOA = 900;
+const VACANCY = 0.04;
+const REPAIRS = 600;
+const TENANT_CHANGE_YEARS = 3;
+const INVESTMENT_FEE = 12000;
+const RESERVE_FUND = 10000;
+
+const CLOSING_COSTS = {
+  llc: 800, loanPoints: 2080, appraisal: 500, inspection: 500,
+  blinds: 500, escrow: 600, contractor: 2000, title: 1567, loanOrigination: 500
+};
+const TOTAL_CLOSING = Object.values(CLOSING_COSTS).reduce((a,b)=>a+b,0);
+
+const SENSITIVITY_RATES = [0.02, 0.04, 0.06, 0.08, 0.10];
+
+function fmt$(v) { return '$' + Math.round(v).toLocaleString('en-US'); }
+function fmtPct(v) { return (v * 100).toFixed(1) + '%'; }
+function fmtSign(v) {
+  const s = Math.round(v);
+  return (s >= 0 ? '+' : '') + '$' + s.toLocaleString('en-US');
+}
+
+function setCell(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function setCashCell(id, v) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = fmtSign(v);
+  el.classList.remove('positive','negative');
+  if (Math.round(v) >= 0) el.classList.add('positive');
+  else el.classList.add('negative');
+}
+
+function recalc() {
+  const scenarios = [];
+
+  for (let i = 0; i < 3; i++) {
+    const housePrice  = parseFloat(document.getElementById(`housePrice_${i}`).value.replace(/,/g,'')) || 0;
+    const rent        = parseFloat(document.getElementById(`rent_${i}`).value.replace(/,/g,'')) || 0;
+    const rateInput   = parseFloat(document.getElementById(`rate_${i}`).value) || 0;
+    const rate        = rateInput / 100;
+    const ioYears     = parseFloat(document.getElementById(`ioYears_${i}`).value) || 0;
+    const piYears     = parseFloat(document.getElementById(`piYears_${i}`).value) || 0;
+    const finInput    = parseFloat(document.getElementById(`headerFin_${i}`).value) || 0;
+    const financing   = finInput / 100;
+    const holding     = parseFloat(document.getElementById(`holding_${i}`).value) || 0;
+
+    const totalCost   = housePrice + INVESTMENT_FEE + TOTAL_CLOSING;
+    const mortgage    = financing * housePrice;
+    const downPayment = totalCost - mortgage;
+    const totalEquity = downPayment + RESERVE_FUND;
+
+    const monthlyTax    = housePrice * PROPERTY_TAX / 12;
+    const monthlyIns    = INSURANCE / 12;
+    const monthlyMgmt   = rent * MGMT_FEE;
+    const monthlyHOA    = HOA / 12;
+    const monthlyVac    = rent * VACANCY;
+    const monthlyRepairs= REPAIRS / 12;
+    const monthlyTenant = rent / (TENANT_CHANGE_YEARS * 12);
+
+    const monthlyExp = (PROPERTY_TAX * housePrice + INSURANCE + MGMT_FEE * rent * 12
+                        + rent / TENANT_CHANGE_YEARS + HOA + VACANCY * rent * 12 + REPAIRS) / 12;
+
+    let monthlyFinancing = 0;
+    if (financing > 0) {
+      if (holding <= ioYears) {
+        monthlyFinancing = rate * mortgage / 12;
+      } else {
+        const ioPay = rate * mortgage / 12;
+        const piPay = PMT(rate / 12, piYears * 12, mortgage);
+        monthlyFinancing = (ioYears * ioPay + (holding - ioYears) * piPay) / holding;
+      }
+    }
+
+    const monthlyCash = rent - monthlyExp - monthlyFinancing;
+    const annualCash  = monthlyCash * 12;
+
+    scenarios.push({ housePrice, rent, rate, ioYears, piYears, financing, holding,
+      totalCost, mortgage, downPayment, totalEquity,
+      monthlyTax, monthlyMgmt, monthlyVac, monthlyTenant,
+      monthlyExp, monthlyFinancing, monthlyCash, annualCash });
+
+    document.getElementById(`sh${i}`).textContent = `${Math.round(finInput)}% financing`;
+
+    setCell(`housePriceOut_${i}`, fmt$(housePrice));
+    setCell(`closing_${i}`, fmt$(TOTAL_CLOSING));
+    setCell(`totalCost_${i}`, fmt$(totalCost));
+    setCell(`mortgage_${i}`, fmt$(mortgage));
+    setCell(`downPayment_${i}`, fmt$(downPayment));
+    setCell(`totalEquity_${i}`, fmt$(totalEquity));
+    setCell(`rentIn_${i}`, fmt$(rent));
+    setCell(`monthlyExp_${i}`, fmt$(monthlyExp));
+    setCell(`monthlyFinancing_${i}`, fmt$(monthlyFinancing));
+    setCell(`propTaxM_${i}`, fmt$(monthlyTax));
+    setCell(`mgmtM_${i}`, fmt$(monthlyMgmt));
+    setCell(`vacM_${i}`, fmt$(monthlyVac));
+    setCell(`tenantM_${i}`, fmt$(monthlyTenant));
+    setCashCell(`monthlyCash_${i}`, monthlyCash);
+    setCashCell(`annualCash_${i}`, annualCash);
   }
-];
 
-const employers = [
-  { name: 'Apple AI Manufacturing', icon: '🍎', lat: 29.870, lng: -95.545, employees: '~5,000', desc: "Apple AI server and Mac Mini manufacturing plant. 500,000 sq ft, thousands of employees. Part of Apple's $600B U.S. investment commitment.", type: 'Technology' },
-  { name: 'HPE Global HQ', icon: '💻', lat: 30.017, lng: -95.461, employees: '~4,000', desc: 'Global headquarters of Hewlett Packard Enterprise. Relocated from Silicon Valley in 2022. 440,000 sq ft campus at Springwoods Village.', type: 'Technology' },
-  { name: 'ExxonMobil Campus', icon: '🛢️', lat: 30.0667, lng: -95.3981, employees: '10,000+', desc: "ExxonMobil headquarters in Spring. One of the world's largest energy companies. 10,000+ employees on site.", type: 'Energy' },
-  { name: 'Energy Corridor', icon: '⚡', lat: 29.7724, lng: -95.5609, employees: '90,000+', desc: 'Concentration of HQs including BP, Shell, ConocoPhillips, Phillips 66 and more. Over 90,000 employees in the area.', type: 'Energy' },
-  { name: 'Houston Ship Channel', icon: '🏭', lat: 29.737, lng: -95.013, employees: '100,000+', desc: '44% of total U.S. petrochemical production. Hundreds of plants across a vast industrial zone.', type: 'Industry' },
-  { name: 'Texas Medical Center', icon: '🏥', lat: 29.7066, lng: -95.3975, employees: '106,000+', desc: "The world's largest medical center. 106,000+ employees across 60 medical institutions.", type: 'Healthcare' },
-  { name: 'NASA JSC', icon: '🚀', lat: 29.5519, lng: -95.0930, employees: '10,000+', desc: "NASA's Johnson Space Center. Mission control for human spaceflight. 10,000+ employees including engineers and scientists.", type: 'Space & Research' },
-  { name: 'IAH Airport', icon: '✈️', lat: 29.9902, lng: -95.3368, employees: '40,000+', desc: "George Bush Intercontinental Airport (IAH). Houston's main international gateway with 40M+ passengers/year. 40,000+ workers.", type: 'Transportation' },
-  { name: 'Univ. of Houston', icon: '🎓', lat: 29.7199, lng: -95.3422, employees: '46,000+', desc: 'University of Houston – one of the largest universities in Texas. 46,000+ students, 6,000+ employees, advanced research centers.', type: 'Higher Education' }
-];
-
-const futureDevelopments = [
-  {
-    name: 'Toro District', icon: '🏈', lat: 29.9295, lng: -95.6920,
-    status: 'Planned · Opening 2029', cost: '$34B economic impact',
-    desc: 'New global HQ for the Houston Texans on 83 acres in Bridgeland. 16,000-seat covered stadium, 3 NFL practice fields, retail, hotels, and entertainment. 17,000 new jobs.',
-    highlights: ['150,000 sqft covered stadium', '175,000 sqft office space', '61 commercial acres', '6 parks + 5,000 parking spaces']
-  },
-  {
-    name: 'Convention District', icon: '🏗️', lat: 29.7520, lng: -95.3555,
-    status: 'Under Construction · Phase 1 opens 2028', cost: '$2B · $20B impact over 30 years',
-    desc: 'Expansion of the George R. Brown Convention Center by 700,000 sqft. Largest event hall in Texas. 60 blocks of mixed-use development with residential, hotels, and entertainment.',
-    highlights: ['700,000 sqft expansion', 'Largest hall in Texas', 'FIFA 2026 + RNC 2028', 'New east-west metro line']
-  }
-];
-
-const landmarks = [
-  { name: 'Downtown Houston', icon: '🏙️', lat: 29.7604, lng: -95.3698 }
-];
-
-// MAP SETUP
-const map = L.map('map', { center: [29.95, -95.35], zoom: 10, zoomControl: false });
-const communityBounds = L.latLngBounds(communities.map(c => [c.lat, c.lng]));
-communityBounds.extend(HOUSTON_CENTER);
-map.fitBounds(communityBounds, { padding: [30, 30] });
-L.control.zoom({ position: 'topleft' }).addTo(map);
-
-const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19 });
-const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 });
-const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
-streetLayer.addTo(map);
-
-function setLayer(type) {
-  document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
-  if (type === 'satellite') {
-    map.removeLayer(streetLayer); map.removeLayer(labelsLayer);
-    satelliteLayer.addTo(map); labelsLayer.addTo(map);
-    document.querySelectorAll('.map-btn')[1].classList.add('active');
-  } else {
-    map.removeLayer(satelliteLayer); map.removeLayer(labelsLayer);
-    streetLayer.addTo(map);
-    document.querySelectorAll('.map-btn')[0].classList.add('active');
+  // Sensitivity Table
+  const tbody = document.getElementById('sensitivityBody');
+  tbody.innerHTML = '';
+  for (const appRate of SENSITIVITY_RATES) {
+    const tr = document.createElement('tr');
+    const tdRate = document.createElement('td');
+    tdRate.textContent = (appRate * 100).toFixed(0) + '%';
+    tr.appendChild(tdRate);
+    for (let i = 0; i < 3; i++) {
+      const s = scenarios[i];
+      const salePrice = s.housePrice * Math.pow(1 + appRate, s.holding);
+      const saleCosts = salePrice * 0.07;
+      let remainMortgage;
+      if (s.holding <= s.ioYears) {
+        remainMortgage = s.mortgage;
+      } else {
+        remainMortgage = -FV(s.rate / 12,
+          (s.holding - s.ioYears) * 12,
+          -PMT(s.rate / 12, s.piYears * 12, s.mortgage),
+          s.mortgage);
+      }
+      const annualReturn = ((salePrice - saleCosts - remainMortgage
+                             + (s.monthlyCash * 12 * s.holding)
+                             + RESERVE_FUND - s.downPayment) / s.downPayment) / s.holding;
+      const td = document.createElement('td');
+      td.textContent = (annualReturn * 100).toFixed(1) + '%';
+      if (annualReturn >= 0.075) td.className = 'good';
+      else if (annualReturn < 0.03) td.className = 'bad';
+      else td.className = 'neutral';
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
   }
 }
 
-// DISTANCE RINGS
-const ringDistances = [
-  { radius: 16000, label: '~15 min' },
-  { radius: 32000, label: '~30 min' },
-  { radius: 48000, label: '~45 min' }
+const DEFAULTS = [
+  { housePrice: '200,000', rent: '1,850', rate: 6.5, ioYears: 5, piYears: 15, financing: 0,  holding: 10 },
+  { housePrice: '200,000', rent: '1,850', rate: 6.5, ioYears: 5, piYears: 15, financing: 50, holding: 10 },
+  { housePrice: '200,000', rent: '1,850', rate: 6.5, ioYears: 5, piYears: 15, financing: 70, holding: 10 },
 ];
-L.circle(HOUSTON_CENTER, { radius: 5000, color: '#e94560', fillColor: '#e94560', fillOpacity: 0.08, weight: 2, opacity: 0.5 }).addTo(map);
-ringDistances.forEach(ring => {
-  L.circle(HOUSTON_CENTER, { radius: ring.radius, color: 'rgba(15,52,96,0.25)', fillColor: 'transparent', fillOpacity: 0, weight: 1.5, dashArray: '8,8' }).addTo(map);
-  const labelLat = HOUSTON_CENTER[0] + (ring.radius / 111320);
-  L.marker([labelLat, HOUSTON_CENTER[1]], { icon: L.divIcon({ className: 'ring-label', html: ring.label, iconSize: [60,16], iconAnchor: [30,8] }), interactive: false }).addTo(map);
-});
 
-// DRIVE LINES
-communities.forEach(c => {
-  L.polyline([HOUSTON_CENTER, [c.lat, c.lng]], { color: c.color, weight: 2.5, opacity: 0.6, dashArray: '8,6' }).addTo(map);
-  const midLat = (HOUSTON_CENTER[0] + c.lat) / 2;
-  const midLng = (HOUSTON_CENTER[1] + c.lng) / 2;
-  L.marker([midLat, midLng], { icon: L.divIcon({ className: 'drive-label', html: `🚗 ${c.driveTime}`, iconSize: [90,22], iconAnchor: [45,11] }), interactive: false }).addTo(map);
-});
-
-// COMMUNITY MARKERS
-function createCommunityIcon(color) {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="width:28px;height:28px;background:${color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;background:#fff;border-radius:50%;"></div></div>`,
-    iconSize: [28,28], iconAnchor: [14,14], popupAnchor: [0,-16]
-  });
-}
-
-const communityMarkers = {};
-communities.forEach(c => {
-  const marker = L.marker([c.lat, c.lng], { icon: createCommunityIcon(c.color) })
-    .addTo(map)
-    .bindPopup(`
-      <div class="popup-header">
-        <h3>${c.name}</h3>
-        <div class="sub">${c.area} · ${c.builder} · 🚗 ${c.driveTime} to downtown</div>
-      </div>
-      <div class="popup-body">
-        <p>${c.description}</p>
-        <div class="info-row"><span class="label">Communities</span><span class="value">${c.communities}</span></div>
-        <div class="info-row"><span class="label">Price Range</span><span class="value">${c.priceRange}</span></div>
-        <div class="info-row"><span class="label">School District</span><span class="value">${c.schoolDistrict}</span></div>
-        <div class="info-row"><span class="label">Highlights</span><span class="value">${c.highlights.join(', ')}</span></div>
-        <div class="popup-links">
-          <a class="lennar-link" href="${c.url}" target="_blank">View on Lennar.com →</a>
-          <button class="aerial-btn" onclick="openAerial('${c.id}')">📸 Aerial View</button>
-        </div>
-      </div>
-    `, { maxWidth: 340 });
-  communityMarkers[c.id] = marker;
-  L.marker([c.lat + 0.018, c.lng], { icon: L.divIcon({ className: 'community-label', html: c.name, iconSize: [200,30], iconAnchor: [100,15] }), interactive: false }).addTo(map);
-  L.circle([c.lat, c.lng], { radius: 3000, color: c.color, fillColor: c.color, fillOpacity: 0.08, weight: 1.5, opacity: 0.4 }).addTo(map);
-});
-
-// AERIAL MODAL
-let aerialMap = null;
-function openAerial(communityId) {
-  const c = communities.find(x => x.id === communityId);
-  if (!c) return;
-  document.getElementById('aerialTitle').textContent = `📸 ${c.name} – Satellite View`;
-  document.getElementById('aerialFooter').textContent = c.aerialNote;
-  document.getElementById('aerialOverlay').classList.add('active');
-  if (aerialMap) { aerialMap.remove(); aerialMap = null; }
-  const aLat = c.aerialLat || c.lat;
-  const aLng = c.aerialLng || c.lng;
-  setTimeout(() => {
-    aerialMap = L.map('aerial-map', { center: [aLat, aLng], zoom: c.aerialZoom, zoomControl: true });
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 }).addTo(aerialMap);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(aerialMap);
-    L.marker([aLat, aLng], { icon: createCommunityIcon(c.color) }).addTo(aerialMap);
-    L.circle([aLat, aLng], { radius: 500, color: c.color, fillColor: c.color, fillOpacity: 0.1, weight: 2, dashArray: '6,4' }).addTo(aerialMap);
-  }, 100);
-}
-function closeAerial() {
-  document.getElementById('aerialOverlay').classList.remove('active');
-  if (aerialMap) { aerialMap.remove(); aerialMap = null; }
-}
-document.getElementById('aerialOverlay').addEventListener('click', function(e) { if (e.target === this) closeAerial(); });
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeAerial(); });
-
-// EMPLOYER MARKERS
-function createEmployerIcon(icon) {
-  return L.divIcon({
-    className: 'employer-marker',
-    html: `<div style="width:42px;height:42px;background:#e67e22;border:3px solid #fff;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;font-size:22px;">${icon}</div>`,
-    iconSize: [42,42], iconAnchor: [21,21], popupAnchor: [0,-24]
-  });
-}
-employers.forEach(emp => {
-  L.marker([emp.lat, emp.lng], { icon: createEmployerIcon(emp.icon) })
-    .addTo(map)
-    .bindPopup(`<div class="popup-header" style="background:linear-gradient(135deg,#e67e22,#d35400);"><h3>${emp.icon} ${emp.name}</h3><div class="sub">${emp.type}</div></div><div class="popup-body"><p>${emp.desc}</p></div>`, { maxWidth: 300 });
-  const labelHtml = emp.employees ? `${emp.name}<br><span style="font-size:10px;font-weight:400;opacity:0.85">(${emp.employees} employees)</span>` : emp.name;
-  L.marker([emp.lat + 0.02, emp.lng], { icon: L.divIcon({ className: 'employer-label', html: labelHtml, iconSize: [160,44], iconAnchor: [80,22] }), interactive: false }).addTo(map);
-});
-
-// LANDMARK MARKERS
-function createLandmarkIcon() {
-  return L.divIcon({
-    className: 'landmark-marker',
-    html: `<div style="width:18px;height:18px;background:#3498db;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3);opacity:0.8;"></div>`,
-    iconSize: [18,18], iconAnchor: [9,9], popupAnchor: [0,-12]
-  });
-}
-landmarks.forEach(lm => {
-  L.marker([lm.lat, lm.lng], { icon: createLandmarkIcon() })
-    .addTo(map)
-    .bindPopup(`<div class="popup-header"><h3>${lm.icon} ${lm.name}</h3></div>`, { maxWidth: 220 });
-});
-
-// FUTURE DEVELOPMENT MARKERS
-function createFutureIcon(icon) {
-  return L.divIcon({
-    className: 'future-marker',
-    html: `<div style="width:44px;height:44px;background:linear-gradient(135deg,#8e44ad,#6c3483);border:3px solid #fff;border-radius:10px;box-shadow:0 3px 12px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;font-size:22px;">${icon}</div>`,
-    iconSize: [44,44], iconAnchor: [22,22], popupAnchor: [0,-26]
-  });
-}
-futureDevelopments.forEach(dev => {
-  L.marker([dev.lat, dev.lng], { icon: createFutureIcon(dev.icon) })
-    .addTo(map)
-    .bindPopup(`<div class="popup-header" style="background:linear-gradient(135deg,#8e44ad,#6c3483);"><h3>${dev.icon} ${dev.name}</h3><div class="sub">${dev.status} · ${dev.cost}</div></div><div class="popup-body"><p>${dev.desc}</p><div class="info-row"><span class="label">Highlights</span><span class="value">${dev.highlights.join(' · ')}</span></div></div>`, { maxWidth: 340 });
-  L.marker([dev.lat + 0.02, dev.lng], { icon: L.divIcon({ className: 'employer-label', html: dev.name, iconSize: [160,30], iconAnchor: [80,15] }), interactive: false }).addTo(map);
-});
-
-// RESOURCES PANEL
-const resources = [];
-function renderResources() {
-  const list = document.getElementById('resources-list');
-  const count = document.getElementById('res-count');
-  if (resources.length === 0) {
-    list.innerHTML = `<div class="res-empty-hint">No resources available yet.</div>`;
-    count.style.display = 'none';
-    return;
+function resetDefaults() {
+  for (let i = 0; i < 3; i++) {
+    const d = DEFAULTS[i];
+    ['housePrice','rent','rate','ioYears','piYears','holding'].forEach(f => {
+      const el = document.getElementById(`${f}_${i}`);
+      if (el) {
+        el.value = d[f];
+        el.classList.remove('input-flash');
+        void el.offsetWidth;
+        el.classList.add('input-flash');
+        setTimeout(() => el.classList.remove('input-flash'), 500);
+      }
+    });
+    const headerEl = document.getElementById(`headerFin_${i}`);
+    if (headerEl) headerEl.value = d.financing;
   }
-  count.textContent = resources.length;
-  count.style.display = 'flex';
-  list.innerHTML = resources.map(r => `
-    <div class="res-card" onclick="${r.url ? `window.open('${r.url}','_blank')` : ''}">
-      <div class="res-card-body">
-        <div class="res-card-source"><span class="src-icon ${r.source || 'article'}">${r.sourceIcon || '📄'}</span>${r.sourceName || 'Resource'}</div>
-        ${r.video ? `<video controls src="${r.video}"></video>` : ''}
-        <h3>${r.title}</h3>
-        <div class="res-desc">${r.desc || ''}</div>
-        ${r.date ? `<div class="res-date">${r.date}</div>` : ''}
-        ${r.url ? `<a class="res-link" href="${r.url}" target="_blank">Read more →</a>` : ''}
-        <span class="res-arrow">›</span>
-      </div>
-    </div>
-  `).join('');
+  recalc();
 }
-function toggleResources() {
-  const panel = document.getElementById('resources-panel');
-  const overlay = document.getElementById('resources-overlay');
-  const isOpen = panel.classList.contains('open');
-  if (isOpen) { panel.classList.remove('open'); overlay.classList.remove('active'); }
-  else { renderResources(); panel.classList.add('open'); overlay.classList.add('active'); }
+
+function toggleGroup(groupId) {
+  const cells = document.querySelectorAll(`[data-group="${groupId}"]`);
+  const btn   = document.getElementById(`btn-${groupId}`);
+  const isHidden = cells[0].classList.contains('group-hidden');
+  cells.forEach(c => {
+    if (isHidden) c.classList.remove('group-hidden');
+    else c.classList.add('group-hidden');
+  });
+  if (btn) btn.textContent = isHidden ? '－' : '＋';
 }
-renderResources();
+
+function toggleHeatmap() {
+  const body = document.getElementById('heatmapBody');
+  const toggle = document.getElementById('heatmapToggle');
+  const wasCollapsed = body.classList.contains('collapsed');
+  body.classList.toggle('collapsed');
+  toggle.textContent = body.classList.contains('collapsed') ? '▼' : '▲';
+  if (wasCollapsed) buildHeatmap();
+}
+
+function heatmapColor(val) {
+  const pct = val * 100;
+  let r, g, b;
+  if (pct < 0) {
+    const t = Math.max(0, Math.min(1, (pct + 20) / 20));
+    r = 192 + Math.round(t * 63); g = Math.round(t * 212); b = Math.round(t * 212);
+  } else if (pct <= 3) {
+    const t = pct / 3;
+    r = 255 - Math.round(t * 43); g = 255 - Math.round(t * 18); b = 255 - Math.round(t * 43);
+  } else if (pct <= 8) {
+    const t = (pct - 3) / 5;
+    r = 212 - Math.round(t * 128); g = 237 - Math.round(t * 107); b = 212 - Math.round(t * 159);
+  } else if (pct <= 15) {
+    const t = (pct - 8) / 7;
+    r = 84 - Math.round(t * 84); g = 130 - Math.round(t * 33); b = 53 - Math.round(t * 53);
+  } else { r = 0; g = 97; b = 0; }
+  return `rgb(${r},${g},${b})`;
+}
+
+function heatmapTextColor(val) {
+  const pct = val * 100;
+  if (pct < -5 || pct > 10) return '#ffffff';
+  if (pct < 0) return '#4a0000';
+  return '#1a1a2e';
+}
+
+let heatmapBuilt = false;
+function buildHeatmap() {
+  if (heatmapBuilt) return;
+  heatmapBuilt = true;
+  const head = document.getElementById('heatmapHead');
+  const body = document.getElementById('heatmapBody2');
+  if (!head || !body) return;
+  const price = 200000, rent = 1850, rate = 0.065, ioYears = 5, piYears = 15, appr = 0.04;
+  const finLevels = [0,0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65];
+  const maxYears = 30;
+  let headerHTML = '<tr><th>Holding Years</th>';
+  for (const fin of finLevels) {
+    headerHTML += `<th>${Math.round(fin*100)}% ${fin===0?'cash':'financing'}</th>`;
+  }
+  headerHTML += '</tr>';
+  head.innerHTML = headerHTML;
+  let bodyHTML = '';
+  for (let yr = 1; yr <= maxYears; yr++) {
+    bodyHTML += `<tr><td>Year ${yr}</td>`;
+    for (const fin of finLevels) {
+      const totalCost = price + INVESTMENT_FEE + TOTAL_CLOSING;
+      const mortgage = fin * price;
+      const downPayment = totalCost - mortgage;
+      if (downPayment <= 0) { bodyHTML += '<td style="background:#eee;color:#999;">-</td>'; continue; }
+      const monthlyExp = (PROPERTY_TAX * price + INSURANCE + MGMT_FEE * rent * 12
+                          + rent / TENANT_CHANGE_YEARS + HOA + VACANCY * rent * 12 + REPAIRS) / 12;
+      let monthlyFinancing = 0;
+      if (fin > 0 && rate > 0) {
+        if (yr <= ioYears) {
+          monthlyFinancing = rate * mortgage / 12;
+        } else {
+          const ioPay = rate * mortgage / 12;
+          const piPay = PMT(rate / 12, piYears * 12, mortgage);
+          monthlyFinancing = (ioYears * ioPay + (yr - ioYears) * piPay) / yr;
+        }
+      }
+      const monthlyCash = rent - monthlyExp - monthlyFinancing;
+      const salePrice = price * Math.pow(1 + appr, yr);
+      const saleCosts = salePrice * 0.07;
+      let remainMortgage = 0;
+      if (fin > 0 && rate > 0) {
+        if (yr <= ioYears) { remainMortgage = mortgage; }
+        else { remainMortgage = -FV(rate/12,(yr-ioYears)*12,-PMT(rate/12,piYears*12,mortgage),mortgage); }
+      }
+      const annualROI = ((salePrice - saleCosts - remainMortgage
+                          + (monthlyCash * 12 * yr) + RESERVE_FUND - downPayment) / downPayment) / yr;
+      const bg = heatmapColor(annualROI);
+      const fg = heatmapTextColor(annualROI);
+      bodyHTML += `<td style="background:${bg};color:${fg};">${(annualROI*100).toFixed(1)}%</td>`;
+    }
+    bodyHTML += '</tr>';
+  }
+  body.innerHTML = bodyHTML;
+}
+
+function toggleNotes() {
+  const body = document.getElementById('notesBody');
+  const toggle = document.getElementById('notesToggle');
+  body.classList.toggle('collapsed');
+  toggle.textContent = body.classList.contains('collapsed') ? '▼' : '▲';
+}
+
+recalc();
+
+var portfolioBuilt = false;
+
+const urlParams = new URLSearchParams(window.location.search);
+const showPortfolio = urlParams.get('p') === '1';
+document.querySelector('.tab-nav').style.display = 'none';
+if (!showPortfolio) {
+  document.getElementById('tab-portfolio').style.display = 'none';
+} else {
+  document.getElementById('tab-calc').style.display = 'none';
+  document.querySelector('.reset-btn').style.display = 'none';
+  document.querySelector('.legend').style.display = 'none';
+  document.querySelector('header h1').textContent = '🏠 Property Portfolio – Real Data';
+  document.getElementById('tab-portfolio').style.display = 'block';
+  buildPortfolio();
+}
+
+const scrollWrapper = document.getElementById('gridScrollWrapper');
+if (scrollWrapper) {
+  scrollWrapper.addEventListener('scroll', function() {
+    this.classList.add('scrolled');
+  }, { once: true });
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const btns = document.querySelectorAll('.tab-btn');
+  if (tab === 'calc') btns[0].classList.add('active');
+  else btns[1].classList.add('active');
+  if (tab === 'portfolio') buildPortfolio();
+}
+
+function buildPortfolio() {
+  if (portfolioBuilt) return;
+  portfolioBuilt = true;
+  const POST_PURCHASE = 4146;
+  const TAX_RATE = 0.032;
+  const MGMT = 0.08;
+  const VACANCY_RATE = 0.04;
+  const REPAIRS_ANNUAL = 600;
+  const TENANT_CHG_YRS = 3;
+  const TENANT_CHG_COST = 600;
+
+  const homes = [
+    { addr:'18259 Via Aurelia Dr, New Caney', date:'11/2024', price:190000, closing:1980, rent:1695, hoa:900, ins:1001 },
+    { addr:'18422 Dicarlo Dr, New Caney', date:'02/2025', price:195000, closing:2757, rent:1695, hoa:900, ins:1338 },
+    { addr:'18015 Valle Cupa Ln, New Caney', date:'07/2025', price:200000, closing:2897, rent:1760, hoa:900, ins:986 },
+    { addr:'17966 Valle Cupa Ln, New Caney', date:'09/2025', price:210000, closing:2813, rent:1890, hoa:900, ins:922 },
+    { addr:'17947 Valle Cupa Ln, New Caney', date:'08/2025', price:191100, closing:2878, rent:1760, hoa:900, ins:897 },
+    { addr:'18015 Trepito Ave, New Caney', date:'10/2025', price:200000, closing:1823, rent:1695, hoa:900, ins:922 },
+    { addr:'20927 San Felice Ln, New Caney', date:'10/2025', price:200000, closing:2848, rent:1695, hoa:900, ins:947 },
+    { addr:'18506 Autumn Hts Ln, Crosby', date:'11/2025', price:190000, closing:1000, rent:1800, hoa:2300, ins:1100 },
+    { addr:'18567 Autumn Hts Ln, Crosby', date:'11/2025', price:190000, closing:1000, rent:1850, hoa:2300, ins:1100 },
+    { addr:'16127 Domestic Dove Wy, Hockley', date:'', price:227000, closing:0, rent:2050, hoa:0, ins:0 }
+  ];
+
+  const f$ = v => '$' + Math.round(v).toLocaleString('en-US');
+  const body = document.getElementById('portfolioBody');
+  let totals = { price:0,closing:0,post:0,invest:0,rent:0,hoa:0,ins:0,tax:0,mgmt:0,vac:0,rep:0,exp:0,net:0,annual:0 };
+
+  homes.forEach((h, i) => {
+    const totalInvest = h.price + h.closing + POST_PURCHASE;
+    const mHoa = h.hoa / 12;
+    const mIns = h.ins / 12;
+    const mTax = (h.price * TAX_RATE) / 12;
+    const mMgmt = h.rent * MGMT;
+    const mVac = h.rent * VACANCY_RATE;
+    const mRep = REPAIRS_ANNUAL / 12 + (TENANT_CHG_COST / TENANT_CHG_YRS) / 12;
+    const mExp = mHoa + mIns + mTax + mMgmt + mVac + mRep;
+    const mNet = h.rent - mExp;
+    const aNet = mNet * 12;
+    const capRate = aNet / totalInvest;
+
+    totals.price += h.price; totals.closing += h.closing; totals.post += POST_PURCHASE;
+    totals.invest += totalInvest; totals.rent += h.rent; totals.hoa += mHoa;
+    totals.ins += mIns; totals.tax += mTax; totals.mgmt += mMgmt; totals.vac += mVac;
+    totals.rep += mRep; totals.exp += mExp; totals.net += mNet; totals.annual += aNet;
+
+    const cls = mNet >= 0 ? 'pos' : 'neg';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td class="addr">${h.addr}</td>
+      <td>${h.date}</td>
+      <td>${f$(h.price)}</td>
+      <td>${f$(h.closing)}</td>
+      <td>${f$(POST_PURCHASE)}</td>
+      <td><b>${f$(totalInvest)}</b></td>
+      <td><b>${f$(h.rent)}</b></td>
+      <td>${f$(mHoa)}</td>
+      <td>${f$(mIns)}</td>
+      <td>${f$(mTax)}</td>
+      <td>${f$(mMgmt)}</td>
+      <td>${f$(mVac)}</td>
+      <td>${f$(mRep)}</td>
+      <td>${f$(mExp)}</td>
+      <td class="${cls}"><b>${f$(mNet)}</b></td>
+      <td class="${cls}"><b>${f$(aNet)}</b></td>
+      <td class="highlight">${(capRate*100).toFixed(1)}%</td>
+    `;
+    body.appendChild(tr);
+  });
+
+  const n = homes.length;
+  const avgCap = totals.annual / totals.invest;
+  const cls2 = totals.net >= 0 ? 'pos' : 'neg';
+  const tr2 = document.createElement('tr');
+  tr2.className = 'totals-row';
+  tr2.innerHTML = `
+    <td colspan="2">Average (${n} properties)</td>
+    <td></td>
+    <td>${f$(totals.price/n)}</td>
+    <td>${f$(totals.closing/n)}</td>
+    <td>${f$(totals.post/n)}</td>
+    <td><b>${f$(totals.invest/n)}</b></td>
+    <td><b>${f$(totals.rent/n)}</b></td>
+    <td>${f$(totals.hoa/n)}</td>
+    <td>${f$(totals.ins/n)}</td>
+    <td>${f$(totals.tax/n)}</td>
+    <td>${f$(totals.mgmt/n)}</td>
+    <td>${f$(totals.vac/n)}</td>
+    <td>${f$(totals.rep/n)}</td>
+    <td>${f$(totals.exp/n)}</td>
+    <td class="${cls2}"><b>${f$(totals.net/n)}</b></td>
+    <td class="${cls2}"><b>${f$(totals.annual/n)}</b></td>
+    <td class="highlight">${(avgCap*100).toFixed(1)}%</td>
+  `;
+  body.appendChild(tr2);
+}
 </script>
 </body>
 </html>
